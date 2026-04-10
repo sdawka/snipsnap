@@ -1,0 +1,38 @@
+# Virtual environment
+.venv/
+venv/
+
+# Environment variables (contains secrets)
+.env
+
+# Python bytecode
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pyc
+
+# Distribution / packaging
+*.egg-info/
+dist/
+build/
+*.egg
+
+# SnipSnap data directory (user data, not committed)
+snipsnap_data/
+
+# Test & coverage artifacts
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+
+# macOS
+.DS_Store
+
+# Editor
+.idea/
+.vscode/
+*.swp
+*.swo

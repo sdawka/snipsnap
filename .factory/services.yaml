@@ -1,6 +1,6 @@
 commands:
   install: pip install -e ".[dev]"
-  test: python -m pytest tests/ -x -v --tb=short -j 4
+  test: python -m pytest tests/ -x -v --tb=short -n 4
   typecheck: python -m mypy snipsnap/ --ignore-missing-imports
   lint: python -m ruff check snipsnap/ tests/
 
