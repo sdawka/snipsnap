@@ -460,7 +460,7 @@ def export(
         if fmt == "edl":
             from snipsnap.export.edl import generate_edl
 
-            content = generate_edl(cut_list, frame_rate=int(fps))
+            content = generate_edl(cut_list, frame_rate=fps)
         elif fmt == "fcpxml":
             from snipsnap.export.fcpxml import generate_fcpxml
 

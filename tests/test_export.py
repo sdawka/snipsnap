@@ -500,6 +500,104 @@ class TestGenerateEdl:
 
 
 # ===========================================================================
+# EDL FCM Header Regression Tests
+# ===========================================================================
+
+
+class TestEdlFcmHeader:
+    """Regression tests for FCM (Frame Code Mode) header correctness.
+
+    Validates that the FCM line reflects the configured frame rate:
+    - NON-DROP FRAME for 24, 25, 30 fps
+    - DROP FRAME for 29.97 fps
+    """
+
+    def test_edl_fcm_non_drop_frame_24fps(
+        self, single_segment_cut_list: CutList
+    ) -> None:
+        """24fps must emit FCM: NON-DROP FRAME."""
+        edl = generate_edl(single_segment_cut_list, frame_rate=24)
+        assert "FCM: NON-DROP FRAME" in edl
+
+    def test_edl_fcm_non_drop_frame_25fps(
+        self, single_segment_cut_list: CutList
+    ) -> None:
+        """25fps must emit FCM: NON-DROP FRAME."""
+        edl = generate_edl(single_segment_cut_list, frame_rate=25)
+        assert "FCM: NON-DROP FRAME" in edl
+
+    def test_edl_fcm_non_drop_frame_30fps(
+        self, single_segment_cut_list: CutList
+    ) -> None:
+        """30fps must emit FCM: NON-DROP FRAME."""
+        edl = generate_edl(single_segment_cut_list, frame_rate=30)
+        assert "FCM: NON-DROP FRAME" in edl
+
+    def test_edl_fcm_drop_frame_29_97fps(
+        self, single_segment_cut_list: CutList
+    ) -> None:
+        """29.97fps must emit FCM: DROP FRAME."""
+        edl = generate_edl(single_segment_cut_list, frame_rate=29.97)
+        assert "FCM: DROP FRAME" in edl
+
+    def test_edl_fcm_not_drop_frame_for_24fps(
+        self, single_segment_cut_list: CutList
+    ) -> None:
+        """24fps must not emit FCM: DROP FRAME."""
+        edl = generate_edl(single_segment_cut_list, frame_rate=24)
+        assert "FCM: DROP FRAME" not in edl
+
+    def test_edl_fcm_not_drop_frame_for_25fps(
+        self, single_segment_cut_list: CutList
+    ) -> None:
+        """25fps must not emit FCM: DROP FRAME."""
+        edl = generate_edl(single_segment_cut_list, frame_rate=25)
+        assert "FCM: DROP FRAME" not in edl
+
+    def test_edl_fcm_not_drop_frame_for_30fps(
+        self, single_segment_cut_list: CutList
+    ) -> None:
+        """30fps must not emit FCM: DROP FRAME."""
+        edl = generate_edl(single_segment_cut_list, frame_rate=30)
+        assert "FCM: DROP FRAME" not in edl
+
+    def test_edl_fcm_not_non_drop_frame_for_29_97fps(
+        self, single_segment_cut_list: CutList
+    ) -> None:
+        """29.97fps must not emit FCM: NON-DROP FRAME."""
+        edl = generate_edl(single_segment_cut_list, frame_rate=29.97)
+        assert "FCM: NON-DROP FRAME" not in edl
+
+    def test_edl_fcm_line_at_second_position(
+        self, single_segment_cut_list: CutList
+    ) -> None:
+        """FCM line must immediately follow the TITLE line."""
+        for fps in [24, 25, 30, 29.97]:
+            edl = generate_edl(single_segment_cut_list, frame_rate=fps)
+            lines = edl.splitlines()
+            assert lines[1].startswith("FCM:"), (
+                f"Expected FCM on line 2 at {fps}fps, got: {lines[1]!r}"
+            )
+
+    def test_edl_29_97fps_timecode_frames_in_range(
+        self, single_segment_cut_list: CutList
+    ) -> None:
+        """For 29.97fps, frame component must be in 0–29 range (30fps display)."""
+        edl = generate_edl(single_segment_cut_list, frame_rate=29.97)
+        tc_pattern = re.compile(r"\d{2}:\d{2}:\d{2}:\d{2}")
+        for tc in tc_pattern.findall(edl):
+            ff = int(tc.split(":")[-1])
+            assert 0 <= ff < 30, f"Frame {ff} out of range for 29.97fps in {tc}"
+
+    def test_edl_fcm_default_fps_is_non_drop_frame(
+        self, single_segment_cut_list: CutList
+    ) -> None:
+        """Default frame rate (24fps) must produce NON-DROP FRAME."""
+        edl = generate_edl(single_segment_cut_list)
+        assert "FCM: NON-DROP FRAME" in edl
+
+
+# ===========================================================================
 # FCPXML Tests
 # ===========================================================================
 

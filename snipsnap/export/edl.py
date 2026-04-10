@@ -43,26 +43,64 @@ def _reel_name(source_file: str) -> str:
     return safe[:8]
 
 
-def generate_edl(cut_list: CutList, frame_rate: int = 24, title: str = "") -> str:
+def _get_fcm(frame_rate: float) -> str:
+    """Return the FCM (Frame Code Mode) string for the given frame rate.
+
+    Drop frame timecode is used for 29.97fps (NTSC broadcast standard).
+    All other standard frame rates (24, 25, 30fps) use non-drop frame.
+
+    Args:
+        frame_rate: Frame rate in frames per second.
+
+    Returns:
+        ``"DROP FRAME"`` for 29.97fps, ``"NON-DROP FRAME"`` otherwise.
+    """
+    if abs(frame_rate - 29.97) < 0.01:
+        return "DROP FRAME"
+    return "NON-DROP FRAME"
+
+
+def _normalize_fps(frame_rate: float) -> int:
+    """Normalize a frame rate float to the integer fps used for timecode math.
+
+    29.97fps uses 30 as the integer frame count per second (drop frame
+    convention: frame numbers 0–29 are used, with periodic frame-number
+    skipping to maintain wall-clock accuracy).
+
+    Args:
+        frame_rate: Frame rate in frames per second.
+
+    Returns:
+        Integer fps for use in SMPTE timecode calculations.
+    """
+    if abs(frame_rate - 29.97) < 0.01:
+        return 30
+    return round(frame_rate)
+
+
+def generate_edl(cut_list: CutList, frame_rate: float = 24, title: str = "") -> str:
     """Generate a CMX 3600 EDL string from a CutList.
 
     Args:
         cut_list: The CutList containing ordered CutSegments.
         frame_rate: Frame rate for SMPTE timecode conversion. Default 24.
+            Use 29.97 for NTSC drop-frame (emits ``FCM: DROP FRAME``).
         title: Optional title for the EDL. Defaults to the cut list theme.
 
     Returns:
         EDL file content as a string (UTF-8 text).
     """
     edl_title = title if title else cut_list.theme or "SnipSnap Cut"
+    fcm = _get_fcm(frame_rate)
+    fps = _normalize_fps(frame_rate)
 
     lines: list[str] = []
     lines.append(f"TITLE: {edl_title}")
-    lines.append("FCM: NON-DROP FRAME")
+    lines.append(f"FCM: {fcm}")
     lines.append("")
 
     # Record timecode starts at 01:00:00:00 by convention
-    rec_frames = 1 * 3600 * frame_rate  # 01:00:00:00 in frames
+    rec_frames = 1 * 3600 * fps  # 01:00:00:00 in frames
 
     # Sort segments by order to ensure correct sequencing
     segments = sorted(cut_list.segments, key=lambda s: s.order)
@@ -71,13 +109,13 @@ def generate_edl(cut_list: CutList, frame_rate: int = 24, title: str = "") -> st
         event_num = f"{i:03d}"
         reel = _reel_name(seg.source_file)
 
-        src_in = seconds_to_smpte(seg.start, frame_rate)
-        src_out = seconds_to_smpte(seg.end, frame_rate)
+        src_in = seconds_to_smpte(seg.start, fps)
+        src_out = seconds_to_smpte(seg.end, fps)
 
-        rec_in = _frames_to_smpte(rec_frames, frame_rate)
-        seg_frames = round(seg.end * frame_rate) - round(seg.start * frame_rate)
+        rec_in = _frames_to_smpte(rec_frames, fps)
+        seg_frames = round(seg.end * fps) - round(seg.start * fps)
         rec_frames_out = rec_frames + seg_frames
-        rec_out = _frames_to_smpte(rec_frames_out, frame_rate)
+        rec_out = _frames_to_smpte(rec_frames_out, fps)
 
         # CMX 3600 event line format:
         # NNN  REEL     TRACK TRANS    SRC_IN     SRC_OUT    REC_IN     REC_OUT
