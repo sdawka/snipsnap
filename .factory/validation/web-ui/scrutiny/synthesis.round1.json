@@ -1,0 +1,64 @@
+{
+  "milestone": "web-ui",
+  "round": 1,
+  "status": "fail",
+  "validatorsRun": {
+    "test": {
+      "passed": true,
+      "command": ".venv/bin/python -m pytest tests/ -x -v --tb=short -n 4",
+      "exitCode": 0
+    },
+    "typecheck": {
+      "passed": true,
+      "command": ".venv/bin/python -m mypy snipsnap/ --ignore-missing-imports",
+      "exitCode": 0
+    },
+    "lint": {
+      "passed": true,
+      "command": ".venv/bin/python -m ruff check snipsnap/ tests/",
+      "exitCode": 0
+    }
+  },
+  "reviewsSummary": {
+    "total": 2,
+    "passed": 1,
+    "failed": 1,
+    "failedFeatures": [
+      "web-backend"
+    ]
+  },
+  "blockingIssues": [
+    {
+      "featureId": "web-backend",
+      "severity": "blocking",
+      "description": "Missing required API fields return FastAPI default 422 responses, but feature contract expects HTTP 400 for invalid input/missing required fields."
+    },
+    {
+      "featureId": "web-backend",
+      "severity": "blocking",
+      "description": "POST /api/export/{cutlist_id} does not validate fps; invalid values (for example 0) can raise exporter errors and return HTTP 500 instead of HTTP 400."
+    }
+  ],
+  "appliedUpdates": [],
+  "suggestedGuidanceUpdates": [
+    {
+      "target": "skills",
+      "suggestion": "Refine .factory/skills/web-worker/SKILL.md to allow frontend-only features to skip mandatory API-test-first and agent-browser steps when no backend behavior changed, while still requiring explicit justification in handoff.",
+      "evidence": "Both web-backend and web-frontend reviews observed divergence between rigid web-worker requirements and actual successful work patterns. Frontend feature web-frontend passed review without API test additions, yet handoff marked followedProcedure true.",
+      "isSystemic": true
+    },
+    {
+      "target": "AGENTS.md",
+      "suggestion": "Clarify expected HTTP semantics for request validation errors (400 vs framework-default 422) in mission guidance to prevent contract/test drift.",
+      "evidence": "web-backend expectedBehavior requires 400 for invalid input, but tests and implementation currently assert FastAPI 422 for missing required fields.",
+      "isSystemic": false
+    }
+  ],
+  "rejectedObservations": [
+    {
+      "observation": "Duplicate note that web-worker skill is overly rigid for frontend-only work.",
+      "reason": "duplicate"
+    }
+  ],
+  "previousRound": null
+}

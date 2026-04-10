@@ -1,0 +1,21 @@
+{
+  "featureId": "web-ui-scrutiny-fixes",
+  "reviewedAt": "2026-04-10T22:42:23Z",
+  "commitId": "156018b",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "pass",
+  "codeReview": {
+    "summary": "The fix commit directly resolves both blocking failures from web-backend review and implements the UI timestamp carry-over correction with targeted regression coverage. RequestValidationError is normalized to HTTP 400, export fps now rejects non-positive values with HTTP 400 before generator calls, and formatTimestamp now carries tenths overflow into seconds/minutes/hours.",
+    "issues": []
+  },
+  "sharedStateObservations": [
+    {
+      "area": "skills",
+      "observation": "The backend-worker skill prescribes tests-first (RED) as the default procedure, but this fix transcript applies implementation edits in app.py/index.html before adding most new tests, while handoff still reports followedProcedure=true.",
+      "evidence": "Transcript skeleton for f3af9880-7f39-40dc-87b2-61cab2360a6f shows Edit calls to snipsnap/web/app.py and snipsnap/web/static/index.html before the bulk test additions in tests/test_web.py; .factory/skills/backend-worker/SKILL.md step 2 requires write tests first (RED)."
+    }
+  ],
+  "addressesFailureFrom": ".factory/validation/web-ui/scrutiny/reviews/web-backend.json",
+  "summary": "Reviewed fix feature web-ui-scrutiny-fixes (commit 156018b) against prior failure report for web-backend (commit 2f31e84). The fix adequately addresses the original blocking issues (422 vs 400 validation semantics and invalid fps causing 500) and adds robust tests plus the requested timestamp carry-over correction, so this review passes."
+}

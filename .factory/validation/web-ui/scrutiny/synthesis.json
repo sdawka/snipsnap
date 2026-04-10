@@ -1,7 +1,7 @@
 {
   "milestone": "web-ui",
-  "round": 1,
-  "status": "fail",
+  "round": 2,
+  "status": "pass",
   "validatorsRun": {
     "test": {
       "passed": true,
@@ -20,45 +20,30 @@
     }
   },
   "reviewsSummary": {
-    "total": 2,
+    "total": 1,
     "passed": 1,
-    "failed": 1,
-    "failedFeatures": [
-      "web-backend"
-    ]
+    "failed": 0,
+    "failedFeatures": []
   },
-  "blockingIssues": [
-    {
-      "featureId": "web-backend",
-      "severity": "blocking",
-      "description": "Missing required API fields return FastAPI default 422 responses, but feature contract expects HTTP 400 for invalid input/missing required fields."
-    },
-    {
-      "featureId": "web-backend",
-      "severity": "blocking",
-      "description": "POST /api/export/{cutlist_id} does not validate fps; invalid values (for example 0) can raise exporter errors and return HTTP 500 instead of HTTP 400."
-    }
-  ],
+  "blockingIssues": [],
   "appliedUpdates": [],
   "suggestedGuidanceUpdates": [
     {
       "target": "skills",
-      "suggestion": "Refine .factory/skills/web-worker/SKILL.md to allow frontend-only features to skip mandatory API-test-first and agent-browser steps when no backend behavior changed, while still requiring explicit justification in handoff.",
-      "evidence": "Both web-backend and web-frontend reviews observed divergence between rigid web-worker requirements and actual successful work patterns. Frontend feature web-frontend passed review without API test additions, yet handoff marked followedProcedure true.",
-      "isSystemic": true
-    },
-    {
-      "target": "AGENTS.md",
-      "suggestion": "Clarify expected HTTP semantics for request validation errors (400 vs framework-default 422) in mission guidance to prevent contract/test drift.",
-      "evidence": "web-backend expectedBehavior requires 400 for invalid input, but tests and implementation currently assert FastAPI 422 for missing required fields.",
+      "suggestion": "Clarify backend-worker skill expectations around tests-first (RED) versus implementation-first for small fix features, and require explicit handoff justification when deviating.",
+      "evidence": "Review web-ui-scrutiny-fixes notes implementation edits in snipsnap/web/app.py and snipsnap/web/static/index.html occurred before most new tests in tests/test_web.py while handoff still marked followedProcedure=true.",
       "isSystemic": false
     }
   ],
   "rejectedObservations": [
     {
-      "observation": "Duplicate note that web-worker skill is overly rigid for frontend-only work.",
-      "reason": "duplicate"
+      "observation": "web-worker skill rigidity observation from web-backend and web-frontend reports",
+      "reason": "duplicate-from-previous-round"
+    },
+    {
+      "observation": "400 vs 422 convention mismatch from original web-backend report",
+      "reason": "resolved-by-fix-feature"
     }
   ],
-  "previousRound": null
+  "previousRound": ".factory/validation/web-ui/scrutiny/synthesis.round1.json"
 }
