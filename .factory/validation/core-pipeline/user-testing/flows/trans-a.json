@@ -1,0 +1,202 @@
+{
+  "groupId": "trans-a",
+  "milestone": "core-pipeline",
+  "testedAt": "2026-04-10T20:46:37.179223+00:00",
+  "isolation": {
+    "surface": "CLI",
+    "sandboxRoot": "/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/trans-a",
+    "dataDir": "/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/trans-a/data",
+    "videoDir": "/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/trans-a/videos",
+    "evidenceDir": "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/core-pipeline/trans-a"
+  },
+  "toolsUsed": [
+    "cli-subprocess",
+    "ffmpeg",
+    "python-json-validation"
+  ],
+  "commandsRun": [
+    {
+      "command": "SNIPSNAP_DATA_DIR=\"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/trans-a/data\" snipsnap --help > \"/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/core-pipeline/trans-a/snipsnap-help.txt\" 2>&1",
+      "exitCode": 127,
+      "evidence": "core-pipeline/trans-a/snipsnap-help.txt",
+      "note": "Initial attempt before CLI entry point was available in PATH."
+    },
+    {
+      "command": "SNIPSNAP_DATA_DIR=\"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/trans-a/data\" python3 -m snipsnap.cli --help > \"/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/core-pipeline/trans-a/python-module-help.txt\" 2>&1",
+      "exitCode": 1,
+      "evidence": "core-pipeline/trans-a/python-module-help.txt",
+      "note": "System Python missing project dependencies (click)."
+    },
+    {
+      "command": "python3 -m pip install -e \"/Users/sdawka/Code/snipsnap\" > \"/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/core-pipeline/trans-a/pip-install-editable.log\" 2>&1",
+      "exitCode": 1,
+      "evidence": "core-pipeline/trans-a/pip-install-editable.log",
+      "note": "Blocked by externally-managed Python (PEP 668)."
+    },
+    {
+      "command": "python3 -m venv \"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/trans-a/venv\" && \"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/trans-a/venv/bin/python\" -m pip install -e \"/Users/sdawka/Code/snipsnap\" > \"/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/core-pipeline/trans-a/venv-pip-install.log\" 2>&1",
+      "exitCode": 0,
+      "evidence": "core-pipeline/trans-a/venv-pip-install.log"
+    },
+    {
+      "command": "mkdir -p \"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/trans-a/videos/single\" \"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/trans-a/videos/batch/nested\" && say -o \"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/trans-a/videos/single/alpha.aiff\" \"Hello this is transcription validation clip alpha.\" && ffmpeg -y -loglevel error -f lavfi -i color=c=black:s=320x240:d=6 -i \"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/trans-a/videos/single/alpha.aiff\" -c:v libx264 -c:a aac -shortest \"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/trans-a/videos/single/alpha.mp4\" && say -o \"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/trans-a/videos/batch/beta.aiff\" \"Beta clip includes spoken words for batch transcription test.\" && ffmpeg -y -loglevel error -f lavfi -i color=c=blue:s=320x240:d=6 -i \"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/trans-a/videos/batch/beta.aiff\" -c:v libx264 -c:a aac -shortest \"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/trans-a/videos/batch/beta.mp4\" && say -o \"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/trans-a/videos/batch/nested/gamma.aiff\" \"Gamma clip is inside nested folder for recursive discovery.\" && ffmpeg -y -loglevel error -f lavfi -i color=c=green:s=320x240:d=6 -i \"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/trans-a/videos/batch/nested/gamma.aiff\" -c:v libx264 -c:a aac -shortest \"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/trans-a/videos/batch/nested/gamma.mov\" > \"/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/core-pipeline/trans-a/fixture-generation.log\" 2>&1",
+      "exitCode": 0,
+      "evidence": "core-pipeline/trans-a/fixture-generation.log"
+    },
+    {
+      "command": "SNIPSNAP_DATA_DIR=\"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/trans-a/data\" \"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/trans-a/venv/bin/snipsnap\" transcribe \"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/trans-a/videos/single\" --model tiny > \"/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/core-pipeline/trans-a/VAL-TRANS-002-transcribe-single.log\" 2>&1",
+      "exitCode": 0,
+      "evidence": "core-pipeline/trans-a/VAL-TRANS-002-transcribe-single.log"
+    },
+    {
+      "command": "SNIPSNAP_DATA_DIR=\"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/trans-a/data\" \"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/trans-a/venv/bin/snipsnap\" transcribe \"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/trans-a/videos/batch\" --model tiny > \"/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/core-pipeline/trans-a/VAL-TRANS-001-003-transcribe-batch.log\" 2>&1",
+      "exitCode": 0,
+      "evidence": "core-pipeline/trans-a/VAL-TRANS-001-003-transcribe-batch.log"
+    },
+    {
+      "command": "SNIPSNAP_DATA_DIR=\"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/trans-a/data\" \"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/trans-a/venv/bin/python\" - <<'PY' ... PY > \"/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/core-pipeline/trans-a/VAL-TRANS-004-005-006-validation.log\" 2>&1",
+      "exitCode": 0,
+      "evidence": "core-pipeline/trans-a/VAL-TRANS-004-005-006-validation.log",
+      "note": "Inline script parsed transcription JSONs and validated segment ordering/durations and filename convention."
+    }
+  ],
+  "assertionResults": [
+    {
+      "id": "VAL-TRANS-001",
+      "title": "Discover Video Files in a Target Folder",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Run transcribe on batch folder with recursive content",
+          "expected": "CLI lists discovered files with count and names before processing",
+          "observed": "Output shows 'Found 2 video file(s): beta.mp4, gamma.mov' then transcribing steps."
+        }
+      ],
+      "evidence": {
+        "commandOutput": [
+          "core-pipeline/trans-a/VAL-TRANS-001-003-transcribe-batch.log"
+        ]
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-TRANS-002",
+      "title": "Transcribe a Single Video File With Segment Timestamps",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Run transcribe on folder containing only alpha.mp4",
+          "expected": "Command succeeds and writes JSON with segments containing start/end/text",
+          "observed": "Summary reports 1 succeeded; alpha_5b2bb9b2.json contains segment with start=0.0, end=2.6, non-empty text."
+        }
+      ],
+      "evidence": {
+        "commandOutput": [
+          "core-pipeline/trans-a/VAL-TRANS-002-transcribe-single.log"
+        ],
+        "artifacts": [
+          "core-pipeline/trans-a/VAL-TRANS-004-005-006-validation.json"
+        ]
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-TRANS-003",
+      "title": "Batch Transcribe Multiple Video Files",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Run transcribe on batch folder containing beta.mp4 and nested/gamma.mov",
+          "expected": "CLI transcribes each file, prints per-file progress, and summary",
+          "observed": "Output includes Transcribing 1/2 and 2/2 lines and Summary: 2 succeeded. Both JSON outputs created."
+        }
+      ],
+      "evidence": {
+        "commandOutput": [
+          "core-pipeline/trans-a/VAL-TRANS-001-003-transcribe-batch.log"
+        ],
+        "artifacts": [
+          "core-pipeline/trans-a/VAL-TRANS-004-005-006-validation.json"
+        ]
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-TRANS-004",
+      "title": "Segment Timestamps Are Chronologically Ordered and Valid",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Parse all generated transcription JSON files and validate segment ordering and duration constraints",
+          "expected": "Each segment has start < end and non-decreasing start order",
+          "observed": "Validation report shows allSegmentsChronological=true and allSegmentsHavePositiveDuration=true for all files."
+        }
+      ],
+      "evidence": {
+        "artifacts": [
+          "core-pipeline/trans-a/VAL-TRANS-004-005-006-validation.json",
+          "core-pipeline/trans-a/VAL-TRANS-004-005-006-validation.log"
+        ]
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-TRANS-005",
+      "title": "Transcription Output Stored as Valid JSON",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Check generated transcription files on disk and JSON parse them",
+          "expected": ".json files exist and parse cleanly",
+          "observed": "alpha_5b2bb9b2.json, beta_8407e79f.json, gamma_a7d05761.json exist and allJsonParseable=true."
+        }
+      ],
+      "evidence": {
+        "artifacts": [
+          "core-pipeline/trans-a/VAL-TRANS-004-005-006-validation.json"
+        ]
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-TRANS-006",
+      "title": "Transcription JSON File Naming Convention",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Compare source video basenames to transcription JSON filenames",
+          "expected": "Consistent, predictable name pattern based on source filename",
+          "observed": "Files follow stem_hash.json convention: alpha_5b2bb9b2.json, beta_8407e79f.json, gamma_a7d05761.json."
+        }
+      ],
+      "evidence": {
+        "artifacts": [
+          "core-pipeline/trans-a/VAL-TRANS-004-005-006-validation.json"
+        ]
+      },
+      "issues": null
+    }
+  ],
+  "frictions": [
+    {
+      "description": "CLI entry point/dependencies were not initially runnable in system environment (snipsnap not in PATH, and system python lacked click).",
+      "resolved": true,
+      "resolution": "Created an isolated venv under assigned sandbox and installed editable project there before running validations.",
+      "affectedAssertions": [
+        "VAL-TRANS-001",
+        "VAL-TRANS-002",
+        "VAL-TRANS-003",
+        "VAL-TRANS-004",
+        "VAL-TRANS-005",
+        "VAL-TRANS-006"
+      ],
+      "evidence": [
+        "core-pipeline/trans-a/python-module-help.txt",
+        "core-pipeline/trans-a/pip-install-editable.log",
+        "core-pipeline/trans-a/venv-pip-install.log"
+      ]
+    }
+  ],
+  "blockers": [],
+  "summary": "Tested 6 assigned assertions (VAL-TRANS-001..006): 6 passed, 0 failed, 0 blocked."
+}

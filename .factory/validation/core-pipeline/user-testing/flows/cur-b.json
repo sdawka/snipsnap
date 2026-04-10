@@ -1,0 +1,278 @@
+{
+  "groupId": "cur-b",
+  "milestone": "core-pipeline",
+  "testedAt": "2026-04-10T20:53:00.206052+00:00",
+  "isolation": {
+    "surface": "CLI",
+    "sandboxRoot": "/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/cur-b",
+    "dataDir": "/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/cur-b/data",
+    "videoDir": "/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/cur-b/videos",
+    "evidenceDir": "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/core-pipeline/cur-b",
+    "env": {
+      "SNIPSNAP_DATA_DIR": "/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/cur-b/data"
+    }
+  },
+  "toolsUsed": [
+    "cli-subprocess",
+    "python3"
+  ],
+  "commandsRun": [
+    {
+      "command": "SNIPSNAP_DATA_DIR=\"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/cur-b/data\" /Users/sdawka/Code/snipsnap/.venv/bin/python - <<'PY' ... get_config() ... PY",
+      "exitCode": 0,
+      "evidence": "core-pipeline/cur-b/env-openrouter-presence.txt"
+    },
+    {
+      "command": "SNIPSNAP_DATA_DIR=\"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/cur-b/data\" /Users/sdawka/Code/snipsnap/.venv/bin/snipsnap curate",
+      "exitCode": 2,
+      "evidence": "core-pipeline/cur-b/VAL-CUR-008-curate-without-prompt.txt"
+    },
+    {
+      "command": "OPENROUTER_API_KEY=\"\" SNIPSNAP_DATA_DIR=\"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/cur-b/data\" /Users/sdawka/Code/snipsnap/.venv/bin/snipsnap curate --prompt \"missing key check\"",
+      "exitCode": 1,
+      "evidence": "core-pipeline/cur-b/VAL-CUR-007-curate-missing-key.txt"
+    },
+    {
+      "command": "OPENROUTER_API_KEY=\"snipsnap-invalid-cur-b-key\" SNIPSNAP_DATA_DIR=\"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/cur-b/data\" /Users/sdawka/Code/snipsnap/.venv/bin/snipsnap curate --prompt \"invalid key auth check\"",
+      "exitCode": 1,
+      "evidence": "core-pipeline/cur-b/VAL-CUR-013-curate-invalid-key.txt"
+    },
+    {
+      "command": "SNIPSNAP_DATA_DIR=\"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/cur-b/data\" /Users/sdawka/Code/snipsnap/.venv/bin/snipsnap curate --prompt \"Return no segments; test nonce qxvjmptz-9347 where transcript does not contain this token\"",
+      "exitCode": 1,
+      "evidence": "core-pipeline/cur-b/VAL-CUR-009-curate-no-match.txt"
+    },
+    {
+      "command": "SNIPSNAP_DATA_DIR=\"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/cur-b/data\" /Users/sdawka/Code/snipsnap/.venv/bin/snipsnap curate --prompt \"Select one concise highlight from the transcript\"",
+      "exitCode": 1,
+      "evidence": "core-pipeline/cur-b/VAL-CUR-010-curate-single-video.txt"
+    },
+    {
+      "command": "python3 - <<'PY' ... sha256 before ... PY",
+      "exitCode": 0,
+      "evidence": "core-pipeline/cur-b/VAL-CUR-011-checksums-before.txt"
+    },
+    {
+      "command": "SNIPSNAP_DATA_DIR=\"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/cur-b/data\" /Users/sdawka/Code/snipsnap/.venv/bin/snipsnap curate --prompt \"mutation check prompt\"",
+      "exitCode": 1,
+      "evidence": "core-pipeline/cur-b/VAL-CUR-011-curate-run.txt"
+    },
+    {
+      "command": "python3 - <<'PY' ... sha256 after ... PY",
+      "exitCode": 0,
+      "evidence": "core-pipeline/cur-b/VAL-CUR-011-checksums-after.txt"
+    },
+    {
+      "command": "SNIPSNAP_DATA_DIR=\"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/cur-b/data\" /Users/sdawka/Code/snipsnap/.venv/bin/snipsnap curate --prompt \"A\"",
+      "exitCode": 1,
+      "evidence": "core-pipeline/cur-b/VAL-CUR-012-curate-A.txt"
+    },
+    {
+      "command": "SNIPSNAP_DATA_DIR=\"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/cur-b/data\" /Users/sdawka/Code/snipsnap/.venv/bin/snipsnap curate --prompt \"B\"",
+      "exitCode": 1,
+      "evidence": "core-pipeline/cur-b/VAL-CUR-012-curate-B.txt"
+    },
+    {
+      "command": "SNIPSNAP_DATA_DIR=\"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/cur-b/data\" /Users/sdawka/Code/snipsnap/.venv/bin/snipsnap status",
+      "exitCode": 0,
+      "evidence": "core-pipeline/cur-b/VAL-CUR-012-status-after-curations.txt"
+    },
+    {
+      "command": "SNIPSNAP_DATA_DIR=\"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/cur-b/data\" /Users/sdawka/Code/snipsnap/.venv/bin/snipsnap curate --prompt \"config default model probe\"",
+      "exitCode": 1,
+      "evidence": "core-pipeline/cur-b/VAL-CONFIG-001-default-model.txt"
+    },
+    {
+      "command": "SNIPSNAP_DATA_DIR=\"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/cur-b/data\" /Users/sdawka/Code/snipsnap/.venv/bin/snipsnap curate --prompt \"config override model probe\" --model \"openai/gpt-4o-mini\"",
+      "exitCode": 1,
+      "evidence": "core-pipeline/cur-b/VAL-CONFIG-001-override-model.txt"
+    },
+    {
+      "command": "python3 - <<'PY' ... list data tree ... PY",
+      "exitCode": 0,
+      "evidence": "core-pipeline/cur-b/post-run-data-tree.txt"
+    }
+  ],
+  "assertionResults": [
+    {
+      "id": "VAL-CUR-007",
+      "title": "Missing LLM API Key Produces Clear Error",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Run curate with --prompt while forcing OPENROUTER_API_KEY empty",
+          "expected": "Non-zero exit with clear missing API key error and no cut list output",
+          "observed": "Exit code 1 with explicit API key configuration error; no cut list files created"
+        }
+      ],
+      "evidence": {
+        "terminalSnapshots": [
+          "core-pipeline/cur-b/VAL-CUR-007-curate-missing-key.txt",
+          "core-pipeline/cur-b/post-run-data-tree.txt"
+        ]
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-CUR-008",
+      "title": "Curate Command Requires --prompt Argument",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Run snipsnap curate without --prompt",
+          "expected": "Non-zero exit and usage/help indicating required --prompt",
+          "observed": "Exit code 2 with Click usage output and 'Missing option '--prompt'' message"
+        }
+      ],
+      "evidence": {
+        "terminalSnapshots": [
+          "core-pipeline/cur-b/VAL-CUR-008-curate-without-prompt.txt"
+        ]
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-CUR-009",
+      "title": "Prompt Matching Nothing Produces Empty Segments",
+      "status": "blocked",
+      "steps": [
+        {
+          "action": "Run curate with a nonce prompt intended to match nothing",
+          "expected": "Exit code 0 and cut list JSON with segments=[] and total_duration=0",
+          "observed": "Exit code 1 due OpenRouter authentication failure before cut list generation"
+        }
+      ],
+      "evidence": {
+        "terminalSnapshots": [
+          "core-pipeline/cur-b/VAL-CUR-009-curate-no-match.txt"
+        ]
+      },
+      "issues": "Blocked by external dependency: configured OpenRouter API key was rejected (invalid/revoked), so curation output could not be produced."
+    },
+    {
+      "id": "VAL-CUR-010",
+      "title": "Curate Works With a Single Transcribed Video",
+      "status": "blocked",
+      "steps": [
+        {
+          "action": "Run curate with one transcription present in sandbox data",
+          "expected": "Valid cut list generated from single transcribed source",
+          "observed": "Exit code 1 due OpenRouter authentication failure; no cut list created"
+        }
+      ],
+      "evidence": {
+        "terminalSnapshots": [
+          "core-pipeline/cur-b/VAL-CUR-010-curate-single-video.txt",
+          "core-pipeline/cur-b/VAL-CUR-012-status-after-curations.txt"
+        ]
+      },
+      "issues": "Blocked by OpenRouter authentication failure during curate."
+    },
+    {
+      "id": "VAL-CUR-011",
+      "title": "Curate Does Not Mutate Transcription Files",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Capture SHA-256 checksums of transcription files before curate",
+          "expected": "Baseline checksums recorded",
+          "observed": "Baseline checksum recorded for fixture_single.json"
+        },
+        {
+          "action": "Run curate command",
+          "expected": "Command completes without mutating transcription files",
+          "observed": "Curate exited 1 due authentication failure"
+        },
+        {
+          "action": "Capture SHA-256 checksums after curate and compare",
+          "expected": "Checksums unchanged",
+          "observed": "Checksum remained byte-identical before/after"
+        }
+      ],
+      "evidence": {
+        "terminalSnapshots": [
+          "core-pipeline/cur-b/VAL-CUR-011-checksums-before.txt",
+          "core-pipeline/cur-b/VAL-CUR-011-curate-run.txt",
+          "core-pipeline/cur-b/VAL-CUR-011-checksums-after.txt"
+        ]
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-CUR-012",
+      "title": "Multiple Curations Produce Distinct Cut Lists",
+      "status": "blocked",
+      "steps": [
+        {
+          "action": "Run curate twice with prompts A and B, then inspect status for cut list IDs",
+          "expected": "Two distinct cut list IDs produced and exportable independently",
+          "observed": "Both curate runs failed with authentication error; status shows Cut Lists: 0"
+        }
+      ],
+      "evidence": {
+        "terminalSnapshots": [
+          "core-pipeline/cur-b/VAL-CUR-012-curate-A.txt",
+          "core-pipeline/cur-b/VAL-CUR-012-curate-B.txt",
+          "core-pipeline/cur-b/VAL-CUR-012-status-after-curations.txt"
+        ]
+      },
+      "issues": "Blocked by OpenRouter authentication failure; prerequisite cut lists were not generated, so export independence could not be tested."
+    },
+    {
+      "id": "VAL-CUR-013",
+      "title": "Invalid API Key Produces Clear Error",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Run curate with dummy invalid OPENROUTER_API_KEY value",
+          "expected": "Non-zero exit with authentication error, no partial cut list, key value not echoed",
+          "observed": "Exit code 1 with clear authentication failure message; no key value leaked in output; no cut list created"
+        }
+      ],
+      "evidence": {
+        "terminalSnapshots": [
+          "core-pipeline/cur-b/VAL-CUR-013-curate-invalid-key.txt",
+          "core-pipeline/cur-b/post-run-data-tree.txt"
+        ]
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-CONFIG-001",
+      "title": "LLM Model Is Configurable",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Run curate without --model and observe model line",
+          "expected": "Output indicates default model google/gemini-2.5-flash-lite",
+          "observed": "Output showed 'Using model: google/gemini-2.5-flash-lite'"
+        },
+        {
+          "action": "Run curate with --model openai/gpt-4o-mini and observe model line",
+          "expected": "Output indicates overridden model value",
+          "observed": "Output showed 'Using model: openai/gpt-4o-mini'"
+        }
+      ],
+      "evidence": {
+        "terminalSnapshots": [
+          "core-pipeline/cur-b/VAL-CONFIG-001-default-model.txt",
+          "core-pipeline/cur-b/VAL-CONFIG-001-override-model.txt"
+        ]
+      },
+      "issues": null
+    }
+  ],
+  "frictions": [],
+  "blockers": [
+    {
+      "description": "OpenRouter authentication failed on all curate attempts using configured key (invalid/revoked credentials), preventing successful cut list generation.",
+      "affectedAssertions": [
+        "VAL-CUR-009",
+        "VAL-CUR-010",
+        "VAL-CUR-012"
+      ],
+      "quickFixAttempted": "Retried multiple prompts and a model override invocation; all returned the same authentication failure."
+    }
+  ],
+  "summary": "Tested 8 assertions: 5 passed (VAL-CUR-007, VAL-CUR-008, VAL-CUR-011, VAL-CUR-013, VAL-CONFIG-001) and 3 blocked (VAL-CUR-009, VAL-CUR-010, VAL-CUR-012) due to OpenRouter authentication failures."
+}

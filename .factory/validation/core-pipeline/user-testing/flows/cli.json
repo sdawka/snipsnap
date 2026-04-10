@@ -1,0 +1,183 @@
+{
+  "groupId": "cli",
+  "milestone": "core-pipeline",
+  "testedAt": "2026-04-10T20:50:30Z",
+  "isolation": {
+    "surface": "CLI",
+    "sandboxRoot": "/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/cli",
+    "dataDir": "/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/cli/data",
+    "videoDir": "/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/cli/videos",
+    "evidenceDir": "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/core-pipeline/cli",
+    "env": {
+      "SNIPSNAP_DATA_DIR": "/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/cli/data"
+    }
+  },
+  "toolsUsed": [
+    "cli-subprocess",
+    "ffmpeg"
+  ],
+  "commandsRun": [
+    {
+      "command": "SNIPSNAP_DATA_DIR=\"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/cli/data\" \"/Users/sdawka/Code/snipsnap/.venv/bin/snipsnap\" --help > \"/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/core-pipeline/cli/VAL-CLI-002-root-help.txt\" 2>&1",
+      "exitCode": 0,
+      "evidence": "core-pipeline/cli/VAL-CLI-002-root-help.txt"
+    },
+    {
+      "command": "SNIPSNAP_DATA_DIR=\"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/cli/data\" \"/Users/sdawka/Code/snipsnap/.venv/bin/snipsnap\" --version > \"/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/core-pipeline/cli/VAL-CLI-002-version.txt\" 2>&1",
+      "exitCode": 0,
+      "evidence": "core-pipeline/cli/VAL-CLI-002-version.txt"
+    },
+    {
+      "command": "SNIPSNAP_DATA_DIR=\"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/cli/data\" \"/Users/sdawka/Code/snipsnap/.venv/bin/snipsnap\" status > \"/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/core-pipeline/cli/VAL-CLI-001-status-empty.txt\" 2>&1",
+      "exitCode": 0,
+      "evidence": "core-pipeline/cli/VAL-CLI-001-status-empty.txt"
+    },
+    {
+      "command": "SNIPSNAP_DATA_DIR=\"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/cli/data\" \"/Users/sdawka/Code/snipsnap/.venv/bin/snipsnap\" curate --help > \"/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/core-pipeline/cli/VAL-CLI-003-curate-help.txt\" 2>&1",
+      "exitCode": 0,
+      "evidence": "core-pipeline/cli/VAL-CLI-003-curate-help.txt"
+    },
+    {
+      "command": "SNIPSNAP_DATA_DIR=\"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/cli/data\" \"/Users/sdawka/Code/snipsnap/.venv/bin/snipsnap\" export --help > \"/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/core-pipeline/cli/VAL-CLI-003-export-help.txt\" 2>&1",
+      "exitCode": 0,
+      "evidence": "core-pipeline/cli/VAL-CLI-003-export-help.txt"
+    },
+    {
+      "command": "mkdir -p \"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/cli/videos\" && /opt/homebrew/bin/ffmpeg -y -f lavfi -i testsrc=duration=4:size=320x240:rate=25 -f lavfi -i sine=frequency=523:duration=4 -c:v libx264 -c:a aac -shortest \"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/cli/videos/cli-fixture.mp4\" > \"/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/core-pipeline/cli/fixture-video-generation.txt\" 2>&1",
+      "exitCode": 0,
+      "evidence": "core-pipeline/cli/fixture-video-generation.txt"
+    },
+    {
+      "command": "SNIPSNAP_DATA_DIR=\"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/cli/data\" \"/Users/sdawka/Code/snipsnap/.venv/bin/snipsnap\" transcribe \"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/cli/videos\" --model tiny > \"/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/core-pipeline/cli/VAL-CLI-004-transcribe.log\" 2>&1",
+      "exitCode": 0,
+      "evidence": "core-pipeline/cli/VAL-CLI-004-transcribe.log"
+    },
+    {
+      "command": "SNIPSNAP_DATA_DIR=\"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/cli/data\" \"/Users/sdawka/Code/snipsnap/.venv/bin/snipsnap\" status > \"/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/core-pipeline/cli/status-after-transcribe.txt\" 2>&1",
+      "exitCode": 0,
+      "evidence": "core-pipeline/cli/status-after-transcribe.txt"
+    },
+    {
+      "command": "SNIPSNAP_DATA_DIR=\"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/cli/data\" \"/Users/sdawka/Code/snipsnap/.venv/bin/snipsnap\" curate --prompt \"find one notable moment\" > \"/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/core-pipeline/cli/VAL-CLI-004-curate.log\" 2>&1",
+      "exitCode": 1,
+      "evidence": "core-pipeline/cli/VAL-CLI-004-curate.log"
+    },
+    {
+      "command": "SNIPSNAP_DATA_DIR=\"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/cli/data\" \"/Users/sdawka/Code/snipsnap/.venv/bin/snipsnap\" status > \"/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/core-pipeline/cli/VAL-CLI-004-status-after-curate-attempt.txt\" 2>&1",
+      "exitCode": 0,
+      "evidence": "core-pipeline/cli/VAL-CLI-004-status-after-curate-attempt.txt"
+    },
+    {
+      "command": "SNIPSNAP_DATA_DIR=\"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/cli/data\" \"/Users/sdawka/Code/snipsnap/.venv/bin/snipsnap\" export --format edl fake-cut-list-id > \"/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/core-pipeline/cli/VAL-CLI-004-export-fake-id.txt\" 2>&1",
+      "exitCode": 1,
+      "evidence": "core-pipeline/cli/VAL-CLI-004-export-fake-id.txt"
+    }
+  ],
+  "assertionResults": [
+    {
+      "id": "VAL-CLI-001",
+      "title": "Status Command Shows Pipeline State",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Run snipsnap status in empty sandbox data directory",
+          "expected": "Shows transcription and cut list counts with empty-state messaging and exits 0",
+          "observed": "Printed 'Transcriptions: 0 (none)' and 'Cut Lists: 0 (none)' and exited 0"
+        }
+      ],
+      "evidence": {
+        "terminalSnapshots": [
+          "core-pipeline/cli/VAL-CLI-001-status-empty.txt"
+        ]
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-CLI-002",
+      "title": "Root Help and Version Commands",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Run snipsnap --help",
+          "expected": "Lists transcribe, curate, export, and status subcommands",
+          "observed": "Help output lists commands: curate, export, status, transcribe"
+        },
+        {
+          "action": "Run snipsnap --version",
+          "expected": "Prints version string and exits 0",
+          "observed": "Printed 'snipsnap, version 0.1.0' and exited 0"
+        }
+      ],
+      "evidence": {
+        "terminalSnapshots": [
+          "core-pipeline/cli/VAL-CLI-002-root-help.txt",
+          "core-pipeline/cli/VAL-CLI-002-version.txt"
+        ]
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-CLI-003",
+      "title": "Curate and Export Help Text",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Run snipsnap curate --help",
+          "expected": "Documents --prompt flag",
+          "observed": "Help output includes '--prompt PROMPT' as required option"
+        },
+        {
+          "action": "Run snipsnap export --help",
+          "expected": "Documents --format option and cut-list-id argument",
+          "observed": "Help usage is 'snipsnap export [OPTIONS] CUT_LIST_ID' and includes '--format FORMAT'"
+        }
+      ],
+      "evidence": {
+        "terminalSnapshots": [
+          "core-pipeline/cli/VAL-CLI-003-curate-help.txt",
+          "core-pipeline/cli/VAL-CLI-003-export-help.txt"
+        ]
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-CLI-004",
+      "title": "Cut List IDs Are Discoverable",
+      "status": "blocked",
+      "steps": [
+        {
+          "action": "Generate fixture video, transcribe it, then run curate to produce a cut list",
+          "expected": "Curate succeeds and status lists at least one cut list ID",
+          "observed": "Curate failed with OpenRouter authentication error; status continued to show 'Cut Lists: 0 (none)'"
+        },
+        {
+          "action": "Attempt export using a cut list id",
+          "expected": "Export accepts a discovered cut list ID",
+          "observed": "No discoverable IDs available; export with placeholder id failed with 'Cut list not found'"
+        }
+      ],
+      "evidence": {
+        "terminalSnapshots": [
+          "core-pipeline/cli/fixture-video-generation.txt",
+          "core-pipeline/cli/VAL-CLI-004-transcribe.log",
+          "core-pipeline/cli/status-after-transcribe.txt",
+          "core-pipeline/cli/VAL-CLI-004-curate.log",
+          "core-pipeline/cli/VAL-CLI-004-status-after-curate-attempt.txt",
+          "core-pipeline/cli/VAL-CLI-004-export-fake-id.txt"
+        ]
+      },
+      "issues": "Blocked by invalid/revoked OPENROUTER_API_KEY preventing cut list generation required to validate ID discoverability + successful export acceptance."
+    }
+  ],
+  "frictions": [],
+  "blockers": [
+    {
+      "description": "Curate could not create any cut list because OpenRouter authentication failed ('API key is invalid or has been revoked').",
+      "affectedAssertions": [
+        "VAL-CLI-004"
+      ],
+      "quickFixAttempted": "Created fresh fixture and re-ran transcribe + curate in isolated sandbox; curate still failed with same auth error."
+    }
+  ],
+  "summary": "Tested 4 assigned assertions: 3 passed (VAL-CLI-001..003), 1 blocked (VAL-CLI-004) due to external OpenRouter authentication failure preventing cut list creation."
+}

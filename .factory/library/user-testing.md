@@ -34,3 +34,19 @@ Testing surface, required testing skills/tools, resource cost classification per
 - Sample video files needed for transcription testing
 - Workers should create short (5-10 second) test videos using ffmpeg for testing purposes
 - Example: `ffmpeg -f lavfi -i testsrc=duration=5:size=320x240:rate=25 -f lavfi -i sine=frequency=440:duration=5 -c:v libx264 -c:a aac -shortest test_video.mp4`
+
+## Flow Validator Guidance: CLI
+
+- Each flow validator must stay inside its assigned sandbox root only.
+- Do not read/write another validator's sandbox, evidence, or data directory.
+- Set `SNIPSNAP_DATA_DIR` to the assigned sandbox data directory for every CLI command.
+- Use dedicated fixture/video directories within the sandbox for file creation.
+- Avoid mutating repository source files; CLI validation should only create runtime artifacts in sandbox/evidence paths.
+- If external LLM access is unavailable, record assertions as blocked with exact command output/evidence rather than forcing mocked application internals.
+- Prefer `./.venv/bin/snipsnap` (or sandbox-local venv `bin/snipsnap`) instead of relying on system PATH.
+- `transcribe` uses `SNIPSNAP_DATA_DIR` env for isolation (it does not expose `--data-dir`).
+
+## Known External Dependency Blocker
+
+- Successful curation assertions require a valid `OPENROUTER_API_KEY`.
+- If `.env` contains a placeholder/revoked key, curation-dependent assertions should be marked blocked with captured auth-error evidence.

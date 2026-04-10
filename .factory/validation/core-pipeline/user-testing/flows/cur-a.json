@@ -1,0 +1,190 @@
+{
+  "groupId": "cur-a",
+  "milestone": "core-pipeline",
+  "testedAt": "2026-04-10T20:45:31.921506+00:00",
+  "isolation": {
+    "surface": "CLI",
+    "sandboxRoot": "/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/cur-a",
+    "dataDir": "/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/cur-a/data",
+    "videoDir": "/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/cur-a/videos",
+    "evidenceDir": "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/core-pipeline/cur-a",
+    "env": {
+      "SNIPSNAP_DATA_DIR": "/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/cur-a/data"
+    }
+  },
+  "toolsUsed": [
+    "cli-subprocess",
+    "ffmpeg"
+  ],
+  "commandsRun": [
+    {
+      "command": "SNIPSNAP_DATA_DIR=\"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/cur-a/data\" /Users/sdawka/Code/snipsnap/.venv/bin/snipsnap curate --help",
+      "exitCode": 0,
+      "evidence": null
+    },
+    {
+      "command": "SNIPSNAP_DATA_DIR=\"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/cur-a/data\" /Users/sdawka/Code/snipsnap/.venv/bin/snipsnap curate --prompt \"anything\"",
+      "exitCode": 1,
+      "evidence": "core-pipeline/cur-a/VAL-CUR-006-curate-no-transcriptions.txt"
+    },
+    {
+      "command": "/opt/homebrew/bin/ffmpeg -y -f lavfi -i testsrc=duration=4:size=320x240:rate=25 -f lavfi -i sine=frequency=440:duration=4 -c:v libx264 -c:a aac -shortest /Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/cur-a/videos/clip1.mp4",
+      "exitCode": 0,
+      "evidence": "core-pipeline/cur-a/fixture-video-generation.txt"
+    },
+    {
+      "command": "/opt/homebrew/bin/ffmpeg -y -f lavfi -i testsrc=duration=5:size=320x240:rate=25 -f lavfi -i sine=frequency=660:duration=5 -c:v libx264 -c:a aac -shortest /Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/cur-a/videos/clip2.mp4",
+      "exitCode": 0,
+      "evidence": "core-pipeline/cur-a/fixture-video-generation.txt"
+    },
+    {
+      "command": "SNIPSNAP_DATA_DIR=\"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/cur-a/data\" /Users/sdawka/Code/snipsnap/.venv/bin/snipsnap transcribe \"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/cur-a/videos\"",
+      "exitCode": 0,
+      "evidence": "core-pipeline/cur-a/transcribe-fixtures.txt"
+    },
+    {
+      "command": "SNIPSNAP_DATA_DIR=\"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/cur-a/data\" /Users/sdawka/Code/snipsnap/.venv/bin/snipsnap curate --prompt \"find funny moments\"",
+      "exitCode": 1,
+      "evidence": "core-pipeline/cur-a/curate-find-funny-moments.txt"
+    },
+    {
+      "command": "SNIPSNAP_DATA_DIR=\"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/cur-a/data\" /Users/sdawka/Code/snipsnap/.venv/bin/snipsnap curate --prompt \"find funny moments\" --model \"google/gemini-2.5-flash-lite\"",
+      "exitCode": 1,
+      "evidence": "core-pipeline/cur-a/curate-find-funny-moments-retry.txt"
+    }
+  ],
+  "assertionResults": [
+    {
+      "id": "VAL-CUR-001",
+      "title": "Basic Curate Command Produces a Cut List",
+      "status": "blocked",
+      "steps": [
+        {
+          "action": "Run curation with prompt 'find funny moments' after generating transcriptions",
+          "expected": "Exit code 0 and cut list JSON created",
+          "observed": "Exit code 1 with OpenRouter authentication failure; no cut list created"
+        }
+      ],
+      "evidence": {
+        "terminalSnapshots": [
+          "core-pipeline/cur-a/transcribe-fixtures.txt",
+          "core-pipeline/cur-a/curate-find-funny-moments.txt",
+          "core-pipeline/cur-a/curate-find-funny-moments-retry.txt",
+          "core-pipeline/cur-a/post-run-data-tree.txt"
+        ]
+      },
+      "issues": "Blocked by external dependency: OpenRouter API authentication failed (invalid/revoked API key)."
+    },
+    {
+      "id": "VAL-CUR-002",
+      "title": "Cut List Output Is Valid JSON With Required Fields",
+      "status": "blocked",
+      "steps": [
+        {
+          "action": "Attempt to generate cut list via curate command",
+          "expected": "Valid cut list JSON available for schema/type validation",
+          "observed": "Curate failed before cut list creation due to authentication error"
+        }
+      ],
+      "evidence": {
+        "terminalSnapshots": [
+          "core-pipeline/cur-a/curate-find-funny-moments.txt",
+          "core-pipeline/cur-a/curate-find-funny-moments-retry.txt"
+        ]
+      },
+      "issues": "No cut list artifact produced because curation is blocked by invalid OpenRouter credentials."
+    },
+    {
+      "id": "VAL-CUR-003",
+      "title": "Segment Timestamps Are Valid and Within Source Boundaries",
+      "status": "blocked",
+      "steps": [
+        {
+          "action": "Attempt to generate cut list then validate timestamps against transcriptions",
+          "expected": "Segment-level timestamp boundary checks performed",
+          "observed": "Cannot run timestamp checks because curate failed and produced no segments"
+        }
+      ],
+      "evidence": {
+        "terminalSnapshots": [
+          "core-pipeline/cur-a/curate-find-funny-moments.txt",
+          "core-pipeline/cur-a/curate-find-funny-moments-retry.txt"
+        ]
+      },
+      "issues": "Prerequisite cut list generation blocked by OpenRouter authentication failure."
+    },
+    {
+      "id": "VAL-CUR-004",
+      "title": "Segment Source File References an Actual Transcribed Video",
+      "status": "blocked",
+      "steps": [
+        {
+          "action": "Attempt to generate cut list then verify source_file references",
+          "expected": "Each segment source_file maps to an existing transcription",
+          "observed": "No cut list generated due to authentication failure"
+        }
+      ],
+      "evidence": {
+        "terminalSnapshots": [
+          "core-pipeline/cur-a/curate-find-funny-moments.txt",
+          "core-pipeline/cur-a/curate-find-funny-moments-retry.txt",
+          "core-pipeline/cur-a/post-run-data-tree.txt"
+        ]
+      },
+      "issues": "Prerequisite cut list generation blocked by OpenRouter authentication failure."
+    },
+    {
+      "id": "VAL-CUR-005",
+      "title": "Total Duration Equals Sum of Segment Durations",
+      "status": "blocked",
+      "steps": [
+        {
+          "action": "Attempt to generate cut list then compare computed duration to total_duration",
+          "expected": "Computed sum matches cut list total_duration within tolerance",
+          "observed": "No cut list available because curate failed before output"
+        }
+      ],
+      "evidence": {
+        "terminalSnapshots": [
+          "core-pipeline/cur-a/curate-find-funny-moments.txt",
+          "core-pipeline/cur-a/curate-find-funny-moments-retry.txt"
+        ]
+      },
+      "issues": "Prerequisite cut list generation blocked by OpenRouter authentication failure."
+    },
+    {
+      "id": "VAL-CUR-006",
+      "title": "No Transcriptions Exist Produces Clear Error",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Run curate with prompt 'anything' against empty data directory",
+          "expected": "Non-zero exit, clear guidance to run transcribe first, and no cut list file",
+          "observed": "Exit code 1 with message: 'No transcriptions found. Run 'snipsnap transcribe <folder>' first...'; no cut list files present"
+        }
+      ],
+      "evidence": {
+        "terminalSnapshots": [
+          "core-pipeline/cur-a/VAL-CUR-006-curate-no-transcriptions.txt",
+          "core-pipeline/cur-a/post-run-data-tree.txt"
+        ]
+      },
+      "issues": null
+    }
+  ],
+  "frictions": [],
+  "blockers": [
+    {
+      "description": "OpenRouter authentication failure prevented all successful curate runs needed for VAL-CUR-001..005.",
+      "affectedAssertions": [
+        "VAL-CUR-001",
+        "VAL-CUR-002",
+        "VAL-CUR-003",
+        "VAL-CUR-004",
+        "VAL-CUR-005"
+      ],
+      "quickFixAttempted": "Retried curate with explicit --model; same invalid/revoked API key error persisted."
+    }
+  ],
+  "summary": "Tested 6 assigned assertions: 1 passed (VAL-CUR-006), 5 blocked (VAL-CUR-001..005) due to invalid/revoked OpenRouter API key during curation."
+}

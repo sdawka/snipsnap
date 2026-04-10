@@ -1,0 +1,192 @@
+{
+  "groupId": "trans-b",
+  "milestone": "core-pipeline",
+  "testedAt": "2026-04-10T20:46:03.420469+00:00",
+  "isolation": {
+    "surface": "CLI",
+    "sandboxRoot": "/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/trans-b",
+    "dataDir": "/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/trans-b/data",
+    "videoDir": "/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/trans-b/videos",
+    "evidenceDir": "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/core-pipeline/trans-b"
+  },
+  "toolsUsed": [
+    "cli-subprocess",
+    "ffmpeg",
+    "python3"
+  ],
+  "commandsRun": [
+    "mkdir -p /Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/core-pipeline/trans-b ... && ffmpeg fixtures creation in /sandboxes/trans-b/videos",
+    "SNIPSNAP_DATA_DIR=/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/trans-b/data /Users/sdawka/Code/snipsnap/.venv/bin/snipsnap transcribe --help",
+    "SNIPSNAP_DATA_DIR=/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/trans-b/data /Users/sdawka/Code/snipsnap/.venv/bin/snipsnap transcribe --model tiny /Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/trans-b/videos/empty",
+    "SNIPSNAP_DATA_DIR=/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/trans-b/data /Users/sdawka/Code/snipsnap/.venv/bin/snipsnap transcribe --model tiny /Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/trans-b/videos/does-not-exist",
+    "SNIPSNAP_DATA_DIR=/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/trans-b/data /Users/sdawka/Code/snipsnap/.venv/bin/snipsnap transcribe --model tiny /Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/trans-b/videos/nonempty",
+    "python3 (capture transcription mtimes before rerun) -> VAL-TRANS-011-mtime-before.json",
+    "SNIPSNAP_DATA_DIR=/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/trans-b/data /Users/sdawka/Code/snipsnap/.venv/bin/snipsnap transcribe --model tiny /Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/trans-b/videos/nonempty",
+    "python3 (capture transcription mtimes after rerun) -> VAL-TRANS-011-mtime-after.json",
+    "python3 (compare mtime snapshots) -> VAL-TRANS-011-mtime-compare.json",
+    "SNIPSNAP_DATA_DIR=/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/trans-b/data /Users/sdawka/Code/snipsnap/.venv/bin/snipsnap transcribe --model tiny /Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/trans-b/videos/nospeech",
+    "python3 (inspect no_speech transcription JSON) -> VAL-TRANS-013-nospeech-json-check.json",
+    "SNIPSNAP_DATA_DIR=/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/trans-b/data /Users/sdawka/Code/snipsnap/.venv/bin/snipsnap curate --prompt 'find any notable moments'",
+    "SNIPSNAP_DATA_DIR=/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/trans-b/data /Users/sdawka/Code/snipsnap/.venv/bin/snipsnap curate --prompt 'handle no speech transcription gracefully'"
+  ],
+  "assertionResults": [
+    {
+      "id": "VAL-TRANS-007",
+      "title": "Transcription JSON Is Valid for Downstream Curation",
+      "status": "blocked",
+      "steps": [
+        {
+          "action": "Run curate after successful transcriptions exist in assigned data dir",
+          "expected": "Curate reads transcription JSON and produces a cut list without format errors",
+          "observed": "CLI reported 'Curating 3 transcription(s)' (transcriptions loaded), then failed with OpenRouter authentication error before cut list generation"
+        }
+      ],
+      "evidence": {
+        "terminalSnapshots": [
+          "core-pipeline/trans-b/VAL-TRANS-007-curate-after-transcribe.txt"
+        ]
+      },
+      "issues": "Blocked by external service credential state: configured OPENROUTER_API_KEY is invalid/revoked in this environment."
+    },
+    {
+      "id": "VAL-TRANS-008",
+      "title": "Empty Folder Produces Informative Error",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Run transcribe against empty folder",
+          "expected": "Non-zero exit and clear no-video-files message",
+          "observed": "Printed 'No video files found in: .../videos/empty' and exited with code 1"
+        }
+      ],
+      "evidence": {
+        "terminalSnapshots": [
+          "core-pipeline/trans-b/VAL-TRANS-008-empty-folder.txt"
+        ]
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-TRANS-009",
+      "title": "Non-Existent Folder Produces Informative Error",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Run transcribe against non-existent folder path",
+          "expected": "Non-zero exit and clear folder-not-found message",
+          "observed": "Printed 'Error: Folder not found: .../videos/does-not-exist' and exited with code 1"
+        }
+      ],
+      "evidence": {
+        "terminalSnapshots": [
+          "core-pipeline/trans-b/VAL-TRANS-009-missing-folder.txt"
+        ]
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-TRANS-010",
+      "title": "Corrupted Video File Handled Gracefully",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Run transcribe on folder containing corrupted.mp4 + valid videos",
+          "expected": "Warning naming corrupted file and continued processing remaining files",
+          "observed": "Warning emitted for corrupted.mp4, then good_a.mp4 and good_b.mp4 were transcribed; summary showed 2 succeeded, 1 failed"
+        }
+      ],
+      "evidence": {
+        "terminalSnapshots": [
+          "core-pipeline/trans-b/VAL-TRANS-010-batch-with-corrupted.txt"
+        ]
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-TRANS-011",
+      "title": "Already-Transcribed Files Skipped by Default",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Capture transcription JSON mtimes before rerun",
+          "expected": "Baseline mtimes captured",
+          "observed": "Baseline captured for good_a_818ca1e4.json and good_b_8409205d.json"
+        },
+        {
+          "action": "Re-run transcribe without --force",
+          "expected": "Already-transcribed files are skipped",
+          "observed": "Output contained 'Skipping ... good_a.mp4' and 'Skipping ... good_b.mp4'"
+        },
+        {
+          "action": "Compare mtimes before/after rerun",
+          "expected": "Existing transcription files unchanged",
+          "observed": "mtime comparison file reports unchanged=true"
+        }
+      ],
+      "evidence": {
+        "terminalSnapshots": [
+          "core-pipeline/trans-b/VAL-TRANS-011-rerun-skip.txt",
+          "core-pipeline/trans-b/VAL-TRANS-011-mtime-before.json",
+          "core-pipeline/trans-b/VAL-TRANS-011-mtime-after.json",
+          "core-pipeline/trans-b/VAL-TRANS-011-mtime-compare.json"
+        ]
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-TRANS-012",
+      "title": "Help Text Documents Transcription Options",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Run snipsnap transcribe --help",
+          "expected": "Help output documents transcription flags/options",
+          "observed": "Output listed --model, --force, and --help with descriptions; exit code 0"
+        }
+      ],
+      "evidence": {
+        "terminalSnapshots": [
+          "core-pipeline/trans-b/VAL-TRANS-012-help.txt"
+        ]
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-TRANS-013",
+      "title": "Video With No Speech Produces Valid Empty Transcription",
+      "status": "blocked",
+      "steps": [
+        {
+          "action": "Transcribe no_speech.mp4 fixture",
+          "expected": "Valid transcription JSON with empty segments array",
+          "observed": "Transcription succeeded and JSON check found segments_count=0"
+        },
+        {
+          "action": "Run curate with the no-speech transcription present",
+          "expected": "Curation handles no-speech transcription gracefully without crashing",
+          "observed": "Curation command failed before content evaluation due to OpenRouter authentication error"
+        }
+      ],
+      "evidence": {
+        "terminalSnapshots": [
+          "core-pipeline/trans-b/VAL-TRANS-013-transcribe-nospeech.txt",
+          "core-pipeline/trans-b/VAL-TRANS-013-nospeech-json-check.json",
+          "core-pipeline/trans-b/VAL-TRANS-013-curate-nospeech.txt"
+        ]
+      },
+      "issues": "Blocked by external OpenRouter API authentication failure (invalid/revoked key), so curation behavior with no-speech input could not be fully exercised."
+    }
+  ],
+  "frictions": [],
+  "blockers": [
+    {
+      "description": "OpenRouter authentication failed for all curation attempts: configured API key is invalid or revoked.",
+      "affectedAssertions": [
+        "VAL-TRANS-007",
+        "VAL-TRANS-013"
+      ],
+      "quickFixAttempted": "Retried curation with a second prompt; same authentication error persisted."
+    }
+  ],
+  "summary": "Validated 7 assigned assertions: 5 passed, 0 failed, 2 blocked by external OpenRouter authentication configuration."
+}

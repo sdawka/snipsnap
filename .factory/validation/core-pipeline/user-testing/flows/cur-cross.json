@@ -1,0 +1,161 @@
+{
+  "groupId": "cur-cross",
+  "milestone": "core-pipeline",
+  "testedAt": "2026-04-10T20:52:01.625709+00:00",
+  "isolation": {
+    "surface": "CLI",
+    "sandboxRoot": "/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/cur-cross",
+    "dataDir": "/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/cur-cross/data",
+    "videoDir": "/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/cur-cross/videos",
+    "evidenceDir": "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/core-pipeline/cur-cross"
+  },
+  "toolsUsed": [
+    "cli-subprocess",
+    "ffmpeg",
+    "python-config-check"
+  ],
+  "commandsRun": [
+    {
+      "command": "say -o \"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/cur-cross/videos/clip1.aiff\" \"Clip one discusses mountain hiking and scenic views.\" && say -o \"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/cur-cross/videos/clip2.aiff\" \"Clip two covers quick cooking tips for busy evenings.\" && say -o \"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/cur-cross/videos/clip3.aiff\" \"Clip three explains keyboard shortcuts for efficient editing.\" && ffmpeg -y -f lavfi -i color=c=black:s=320x240:d=6 -i \"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/cur-cross/videos/clip1.aiff\" -c:v libx264 -c:a aac -shortest \"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/cur-cross/videos/clip1.mp4\" && ffmpeg -y -f lavfi -i color=c=black:s=320x240:d=6 -i \"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/cur-cross/videos/clip2.aiff\" -c:v libx264 -c:a aac -shortest \"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/cur-cross/videos/clip2.mp4\" && ffmpeg -y -f lavfi -i color=c=black:s=320x240:d=6 -i \"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/cur-cross/videos/clip3.aiff\" -c:v libx264 -c:a aac -shortest \"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/cur-cross/videos/clip3.mp4\"",
+      "exitCode": 0,
+      "evidence": "core-pipeline/cur-cross/01-generate-fixtures.log"
+    },
+    {
+      "command": "SNIPSNAP_DATA_DIR=\"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/cur-cross/data\" /Users/sdawka/Code/snipsnap/.venv/bin/snipsnap status --data-dir \"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/cur-cross/data\"",
+      "exitCode": 0,
+      "evidence": "core-pipeline/cur-cross/05-status-sandbox-initial.log"
+    },
+    {
+      "command": "SNIPSNAP_DATA_DIR=\"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/cur-cross/data\" /Users/sdawka/Code/snipsnap/.venv/bin/snipsnap transcribe \"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/cur-cross/videos\"",
+      "exitCode": 0,
+      "evidence": "core-pipeline/cur-cross/06-transcribe-sandbox.log"
+    },
+    {
+      "command": "SNIPSNAP_DATA_DIR=\"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/cur-cross/data\" /Users/sdawka/Code/snipsnap/.venv/bin/snipsnap curate --data-dir \"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/cur-cross/data\" --prompt \"Select concise, usable highlights from all available clips and preserve source ordering.\"",
+      "exitCode": 1,
+      "evidence": "core-pipeline/cur-cross/07-curate-sandbox.log"
+    },
+    {
+      "command": "SNIPSNAP_DATA_DIR=\"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/cur-cross/data\" /Users/sdawka/Code/snipsnap/.venv/bin/snipsnap curate --data-dir \"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/cur-cross/data\" --prompt \"Select concise, usable highlights from all available clips and preserve source ordering.\"",
+      "exitCode": 1,
+      "evidence": "core-pipeline/cur-cross/07b-curate-sandbox-retry.log",
+      "note": "Non-disruptive retry per validation guidance; same authentication failure."
+    },
+    {
+      "command": "SNIPSNAP_DATA_DIR=\"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/cur-cross/data\" /Users/sdawka/Code/snipsnap/.venv/bin/python - <<'PY' ... PY",
+      "exitCode": 0,
+      "evidence": "core-pipeline/cur-cross/08-openrouter-key-check.log",
+      "note": "Masked config check showed placeholder key prefix 'your_op'."
+    },
+    {
+      "command": "SNIPSNAP_DATA_DIR=\"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/cur-cross/data\" /Users/sdawka/Code/snipsnap/.venv/bin/snipsnap status --data-dir \"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/cur-cross/data\"",
+      "exitCode": 0,
+      "evidence": "core-pipeline/cur-cross/09-status-after-curate-sandbox.log"
+    },
+    {
+      "command": "SNIPSNAP_DATA_DIR=\"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/cur-cross/data\" /Users/sdawka/Code/snipsnap/.venv/bin/snipsnap export --help",
+      "exitCode": 0,
+      "evidence": "core-pipeline/cur-cross/10-export-help.log"
+    },
+    {
+      "command": "SNIPSNAP_DATA_DIR=\"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/cur-cross/data\" /Users/sdawka/Code/snipsnap/.venv/bin/snipsnap export --data-dir \"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/cur-cross/data\" --format edl missing-cut-list",
+      "exitCode": 1,
+      "evidence": "core-pipeline/cur-cross/11-export-without-cutlist.log"
+    }
+  ],
+  "assertionResults": [
+    {
+      "id": "VAL-CROSS-005",
+      "title": "Cut List JSON Structure Passes to Export",
+      "status": "blocked",
+      "steps": [
+        {
+          "action": "Generate fixture videos and run transcription in assigned sandbox",
+          "expected": "Transcriptions available for curation",
+          "observed": "Transcription succeeded for clip1.mp4, clip2.mp4, clip3.mp4 (exit 0)."
+        },
+        {
+          "action": "Run curation to produce cut list JSON",
+          "expected": "Cut list JSON includes source_file, start/end, description, order fields",
+          "observed": "Curation failed with OpenRouter authentication error; no cut list created."
+        },
+        {
+          "action": "Check cut-list availability for export mapping validation",
+          "expected": "At least one cut list present for export 1:1 event mapping check",
+          "observed": "Status reports Cut Lists: 0."
+        }
+      ],
+      "evidence": {
+        "commandOutput": [
+          "core-pipeline/cur-cross/06-transcribe-sandbox.log",
+          "core-pipeline/cur-cross/07-curate-sandbox.log",
+          "core-pipeline/cur-cross/09-status-after-curate-sandbox.log"
+        ],
+        "artifacts": [
+          "core-pipeline/cur-cross/transcriptions/clip1_22c7f9bb.json",
+          "core-pipeline/cur-cross/transcriptions/clip2_d6fa88e9.json",
+          "core-pipeline/cur-cross/transcriptions/clip3_03e6dd60.json"
+        ]
+      },
+      "issues": "Blocked by invalid/revoked OPENROUTER_API_KEY; curation cannot create cut list, so export mapping cannot be validated."
+    },
+    {
+      "id": "VAL-CROSS-011",
+      "title": "Export All Three Formats From Same Cut List",
+      "status": "blocked",
+      "steps": [
+        {
+          "action": "Run curation from sandbox transcriptions to generate a single cut list",
+          "expected": "Curation succeeds and returns cut list ID",
+          "observed": "Curation failed twice with authentication error; no cut list ID produced."
+        },
+        {
+          "action": "Attempt export precondition check and export command discovery",
+          "expected": "Export command available and runnable for edl/fcpxml/davinci once cut list exists",
+          "observed": "Export command exists, but export with missing cut list returns 'not found' because no cut lists exist."
+        }
+      ],
+      "evidence": {
+        "commandOutput": [
+          "core-pipeline/cur-cross/07-curate-sandbox.log",
+          "core-pipeline/cur-cross/07b-curate-sandbox-retry.log",
+          "core-pipeline/cur-cross/10-export-help.log",
+          "core-pipeline/cur-cross/11-export-without-cutlist.log",
+          "core-pipeline/cur-cross/09-status-after-curate-sandbox.log"
+        ]
+      },
+      "issues": "Blocked by upstream curation authentication failure; required source cut list for 3-format export comparison is unavailable."
+    }
+  ],
+  "frictions": [
+    {
+      "description": "`transcribe` does not expose a `--data-dir` option while `status`, `curate`, and `export` do.",
+      "resolved": true,
+      "resolution": "Used command-scoped `SNIPSNAP_DATA_DIR` environment variable for `transcribe` and explicit `--data-dir` for other commands.",
+      "affectedAssertions": [
+        "VAL-CROSS-005",
+        "VAL-CROSS-011"
+      ],
+      "evidence": [
+        "core-pipeline/cur-cross/06-transcribe-sandbox.log",
+        "core-pipeline/cur-cross/10-export-help.log"
+      ]
+    }
+  ],
+  "blockers": [
+    {
+      "description": "OpenRouter authentication fails during curation: API key is invalid/revoked (configured placeholder detected).",
+      "affectedAssertions": [
+        "VAL-CROSS-005",
+        "VAL-CROSS-011"
+      ],
+      "quickFixAttempted": "Retried `snipsnap curate` once and verified masked configuration details; both runs failed with the same authentication error.",
+      "evidence": [
+        "core-pipeline/cur-cross/07-curate-sandbox.log",
+        "core-pipeline/cur-cross/07b-curate-sandbox-retry.log",
+        "core-pipeline/cur-cross/08-openrouter-key-check.log"
+      ]
+    }
+  ],
+  "summary": "Tested 2 assigned assertions (VAL-CROSS-005, VAL-CROSS-011): 0 passed, 0 failed, 2 blocked due to curation authentication failure preventing cut list creation."
+}
