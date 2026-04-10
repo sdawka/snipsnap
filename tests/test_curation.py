@@ -888,3 +888,252 @@ class TestCutListStorage:
 
         assert trans_path.read_bytes() == original_content
         assert trans_path.stat().st_mtime == original_mtime
+
+
+# ---------------------------------------------------------------------------
+# 6. Segment validation
+# ---------------------------------------------------------------------------
+
+
+class TestSegmentValidation:
+    """Test that CutSegments are validated against input transcriptions."""
+
+    def test_nonexistent_source_file_segment_is_discarded(
+        self, transcription_a: Transcription, mock_client: MagicMock, tmp_data_dir: Path
+    ) -> None:
+        """A segment referencing a source_file not in input transcriptions is discarded."""
+        segments_data = [
+            {
+                "source_file": "/videos/does_not_exist.mp4",  # not in transcription_a
+                "start": 0.0,
+                "end": 5.0,
+                "description": "Ghost segment",
+                "order": 0,
+            }
+        ]
+        mock_client.chat.completions.create.return_value = _make_mock_response(
+            _cut_list_json(theme="Test", segments=segments_data)
+        )
+        engine = CurationEngine(client=mock_client, api_key="valid-key")
+        with pytest.raises(CurationError):
+            engine.curate(
+                [transcription_a],
+                prompt="find moments",
+                data_dir=tmp_data_dir,
+            )
+
+    def test_timestamps_exceeding_duration_discarded(
+        self, transcription_a: Transcription, mock_client: MagicMock, tmp_data_dir: Path
+    ) -> None:
+        """A segment with end > transcription.duration is discarded."""
+        # transcription_a.duration == 30.0
+        segments_data = [
+            {
+                "source_file": "/videos/video_a.mp4",
+                "start": 25.0,
+                "end": 999.0,  # exceeds duration of 30.0
+                "description": "Out of bounds",
+                "order": 0,
+            }
+        ]
+        mock_client.chat.completions.create.return_value = _make_mock_response(
+            _cut_list_json(theme="Test", segments=segments_data)
+        )
+        engine = CurationEngine(client=mock_client, api_key="valid-key")
+        with pytest.raises(CurationError):
+            engine.curate(
+                [transcription_a],
+                prompt="find moments",
+                data_dir=tmp_data_dir,
+            )
+
+    def test_negative_start_timestamp_discarded(
+        self, transcription_a: Transcription, mock_client: MagicMock, tmp_data_dir: Path
+    ) -> None:
+        """A segment with start < 0 is discarded."""
+        segments_data = [
+            {
+                "source_file": "/videos/video_a.mp4",
+                "start": -5.0,  # negative start
+                "end": 10.0,
+                "description": "Negative start",
+                "order": 0,
+            }
+        ]
+        mock_client.chat.completions.create.return_value = _make_mock_response(
+            _cut_list_json(theme="Test", segments=segments_data)
+        )
+        engine = CurationEngine(client=mock_client, api_key="valid-key")
+        with pytest.raises(CurationError):
+            engine.curate(
+                [transcription_a],
+                prompt="find moments",
+                data_dir=tmp_data_dir,
+            )
+
+    def test_start_equals_end_discarded(
+        self, transcription_a: Transcription, mock_client: MagicMock, tmp_data_dir: Path
+    ) -> None:
+        """A segment with start >= end (zero-length) is discarded."""
+        segments_data = [
+            {
+                "source_file": "/videos/video_a.mp4",
+                "start": 5.0,
+                "end": 5.0,  # start == end → zero-length
+                "description": "Zero length",
+                "order": 0,
+            }
+        ]
+        mock_client.chat.completions.create.return_value = _make_mock_response(
+            _cut_list_json(theme="Test", segments=segments_data)
+        )
+        engine = CurationEngine(client=mock_client, api_key="valid-key")
+        with pytest.raises(CurationError):
+            engine.curate(
+                [transcription_a],
+                prompt="find moments",
+                data_dir=tmp_data_dir,
+            )
+
+    def test_all_segments_invalid_raises_curation_error(
+        self, transcription_a: Transcription, mock_client: MagicMock, tmp_data_dir: Path
+    ) -> None:
+        """When all returned segments are invalid, CurationError is raised."""
+        segments_data = [
+            {
+                "source_file": "/videos/nonexistent_1.mp4",
+                "start": 0.0,
+                "end": 5.0,
+                "description": "First invalid",
+                "order": 0,
+            },
+            {
+                "source_file": "/videos/nonexistent_2.mp4",
+                "start": 10.0,
+                "end": 20.0,
+                "description": "Second invalid",
+                "order": 1,
+            },
+        ]
+        mock_client.chat.completions.create.return_value = _make_mock_response(
+            _cut_list_json(theme="Test", segments=segments_data)
+        )
+        engine = CurationEngine(client=mock_client, api_key="valid-key")
+        with pytest.raises(CurationError):
+            engine.curate(
+                [transcription_a],
+                prompt="find moments",
+                data_dir=tmp_data_dir,
+            )
+
+    def test_mixed_valid_invalid_keeps_valid_only(
+        self, transcription_a: Transcription, mock_client: MagicMock, tmp_data_dir: Path
+    ) -> None:
+        """When some segments are valid and others invalid, only valid ones are kept."""
+        segments_data = [
+            {
+                "source_file": "/videos/video_a.mp4",
+                "start": 0.0,
+                "end": 5.0,
+                "description": "Valid segment",
+                "order": 0,
+            },
+            {
+                "source_file": "/videos/nonexistent.mp4",  # invalid
+                "start": 5.0,
+                "end": 10.0,
+                "description": "Invalid segment",
+                "order": 1,
+            },
+        ]
+        mock_client.chat.completions.create.return_value = _make_mock_response(
+            _cut_list_json(theme="Test", segments=segments_data)
+        )
+        engine = CurationEngine(client=mock_client, api_key="valid-key")
+        result = engine.curate(
+            [transcription_a],
+            prompt="find moments",
+            data_dir=tmp_data_dir,
+        )
+        assert len(result.segments) == 1
+        assert result.segments[0].source_file == "/videos/video_a.mp4"
+        assert result.segments[0].description == "Valid segment"
+
+    def test_valid_segments_pass_through_unchanged(
+        self, transcription_a: Transcription, mock_client: MagicMock, tmp_data_dir: Path
+    ) -> None:
+        """All-valid segments pass through without discarding."""
+        segments_data = [
+            {
+                "source_file": "/videos/video_a.mp4",
+                "start": 0.0,
+                "end": 5.0,
+                "description": "First valid",
+                "order": 0,
+            },
+            {
+                "source_file": "/videos/video_a.mp4",
+                "start": 10.0,
+                "end": 20.0,
+                "description": "Second valid",
+                "order": 1,
+            },
+        ]
+        mock_client.chat.completions.create.return_value = _make_mock_response(
+            _cut_list_json(theme="Test", segments=segments_data)
+        )
+        engine = CurationEngine(client=mock_client, api_key="valid-key")
+        result = engine.curate(
+            [transcription_a],
+            prompt="find moments",
+            data_dir=tmp_data_dir,
+        )
+        assert len(result.segments) == 2
+
+    def test_empty_segments_not_affected_by_validation(
+        self, transcription_a: Transcription, mock_client: MagicMock, tmp_data_dir: Path
+    ) -> None:
+        """Empty segment list (no match) is not considered 'all invalid'."""
+        mock_client.chat.completions.create.return_value = _make_mock_response(
+            _cut_list_json(theme="Empty", segments=[])
+        )
+        engine = CurationEngine(client=mock_client, api_key="valid-key")
+        result = engine.curate(
+            [transcription_a],
+            prompt="find moments",
+            data_dir=tmp_data_dir,
+        )
+        assert result.segments == []
+        assert result.total_duration == 0.0
+
+    def test_total_duration_recalculated_after_filtering(
+        self, transcription_a: Transcription, mock_client: MagicMock, tmp_data_dir: Path
+    ) -> None:
+        """total_duration must reflect only the valid (kept) segments."""
+        segments_data = [
+            {
+                "source_file": "/videos/video_a.mp4",
+                "start": 0.0,
+                "end": 10.0,
+                "description": "Valid",
+                "order": 0,
+            },
+            {
+                "source_file": "/videos/nonexistent.mp4",  # will be discarded
+                "start": 0.0,
+                "end": 99.0,
+                "description": "Invalid",
+                "order": 1,
+            },
+        ]
+        mock_client.chat.completions.create.return_value = _make_mock_response(
+            _cut_list_json(theme="Test", segments=segments_data)
+        )
+        engine = CurationEngine(client=mock_client, api_key="valid-key")
+        result = engine.curate(
+            [transcription_a],
+            prompt="find moments",
+            data_dir=tmp_data_dir,
+        )
+        # Only the valid segment (0.0 to 10.0) should count
+        assert abs(result.total_duration - 10.0) < 0.01

@@ -153,15 +153,15 @@ def transcribe(folder: str, model: Optional[str], force: bool) -> None:
     # Summary
     # ------------------------------------------------------------------
     click.echo()
-    parts = [f"{completed} transcribed"]
+    parts = [f"{completed} succeeded"]
     if skipped:
         parts.append(f"{skipped} skipped")
     if failed:
         parts.append(f"{failed} failed")
     click.echo("Summary: " + ", ".join(parts) + ".")
 
-    # Exit with non-zero if every file failed (nothing was processed).
-    if failed > 0 and completed == 0 and skipped == 0:
+    # Exit with non-zero if any file failed.
+    if failed > 0:
         sys.exit(1)
 
 
@@ -275,6 +275,20 @@ def curate(prompt: str, model: Optional[str], data_dir: Optional[str]) -> None:
         sys.exit(1)
     except CurationError as exc:
         click.echo(f"Error: Curation failed: {exc}", err=True)
+        sys.exit(1)
+    except openai.APIStatusError as exc:
+        click.echo(
+            f"Error: The API returned an error (HTTP {exc.status_code}). "
+            "Please check your configuration and try again.",
+            err=True,
+        )
+        sys.exit(1)
+    except openai.OpenAIError:
+        click.echo(
+            "Error: An unexpected error occurred while communicating with the API. "
+            "Please check your configuration and try again.",
+            err=True,
+        )
         sys.exit(1)
 
     # ------------------------------------------------------------------

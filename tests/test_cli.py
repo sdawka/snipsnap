@@ -470,8 +470,8 @@ class TestTranscribeErrorRecovery:
         with _patch_provider(stub), patch("snipsnap.cli.save_transcription"):
             result = runner.invoke(main, ["transcribe", str(video_folder)])
 
-        # Exit 0: partial success is still success
-        assert result.exit_code == 0
+        # Exit non-zero: any failure means non-zero exit code
+        assert result.exit_code != 0
         # Warning should mention the failure
         combined = (result.output or "") + (result.stderr or "")
         assert "warning" in combined.lower() or "failed" in combined.lower()
@@ -1413,3 +1413,189 @@ class TestStatusWithCutLists:
         with patch("snipsnap.cli.load_cut_list", return_value=_SAMPLE_CUT_LIST) as mock_load:
             runner.invoke(main, ["export", cut_list_id, "--format", "edl"])
         mock_load.assert_called_once_with(cut_list_id, None)
+
+
+# ===========================================================================
+# transcribe — partial failure exits non-zero
+# ===========================================================================
+
+
+class TestTranscribePartialFailureSummary:
+    def test_partial_failure_exits_nonzero(
+        self, runner: CliRunner, video_folder: Path
+    ) -> None:
+        """Even when some files succeed, any failure must produce a non-zero exit."""
+        call_count = {"n": 0}
+
+        class _FailOnce(_StubProvider):
+            def transcribe(self, video_path: Path | str) -> Transcription:
+                call_count["n"] += 1
+                if call_count["n"] == 1:
+                    raise RuntimeError("Simulated failure")
+                return super().transcribe(video_path)
+
+        stub = _FailOnce()
+        with _patch_provider(stub), patch("snipsnap.cli.save_transcription"):
+            result = runner.invoke(main, ["transcribe", str(video_folder)])
+
+        assert result.exit_code != 0
+
+    def test_partial_failure_summary_shows_succeeded_and_failed(
+        self, runner: CliRunner, video_folder: Path
+    ) -> None:
+        """Summary line must show 'succeeded' and 'failed' counts."""
+        call_count = {"n": 0}
+
+        class _FailOnce(_StubProvider):
+            def transcribe(self, video_path: Path | str) -> Transcription:
+                call_count["n"] += 1
+                if call_count["n"] == 1:
+                    raise RuntimeError("Simulated failure")
+                return super().transcribe(video_path)
+
+        stub = _FailOnce()
+        with _patch_provider(stub), patch("snipsnap.cli.save_transcription"):
+            result = runner.invoke(main, ["transcribe", str(video_folder)])
+
+        combined = (result.output or "") + (result.stderr or "")
+        assert "succeeded" in combined.lower() or "failed" in combined.lower()
+
+    def test_success_only_summary_shows_succeeded(
+        self, runner: CliRunner, video_folder: Path
+    ) -> None:
+        """When all files succeed, summary uses 'succeeded' (not 'transcribed')."""
+        with _patch_provider(), patch("snipsnap.cli.save_transcription"):
+            result = runner.invoke(main, ["transcribe", str(video_folder)])
+
+        assert result.exit_code == 0
+        assert "succeeded" in result.output.lower()
+
+
+# ===========================================================================
+# curate — unmapped OpenAI SDK errors
+# ===========================================================================
+
+
+class TestCurateOpenAIErrors:
+    """Verify that raw openai SDK errors not caught by engine produce
+    user-friendly messages in the CLI (no raw tracebacks)."""
+
+    def test_api_status_error_exits_nonzero(self, runner: CliRunner) -> None:
+        """An unmapped openai.APIStatusError must produce non-zero exit."""
+        import openai
+
+        with patch(
+            "snipsnap.cli.load_all_transcriptions",
+            return_value=[_SAMPLE_TRANSCRIPTION],
+        ), patch("snipsnap.cli.CurationEngine") as mock_cls:
+            mock_engine = MagicMock()
+            mock_engine.curate.side_effect = openai.InternalServerError(
+                message="Internal Server Error",
+                response=MagicMock(status_code=500, headers={}),
+                body={"error": {"message": "Internal Server Error"}},
+            )
+            mock_cls.return_value = mock_engine
+            result = runner.invoke(main, ["curate", "--prompt", "find funny moments"])
+
+        assert result.exit_code != 0
+
+    def test_api_status_error_shows_user_friendly_message(
+        self, runner: CliRunner
+    ) -> None:
+        """User-friendly message must be shown for unmapped APIStatusError."""
+        import openai
+
+        with patch(
+            "snipsnap.cli.load_all_transcriptions",
+            return_value=[_SAMPLE_TRANSCRIPTION],
+        ), patch("snipsnap.cli.CurationEngine") as mock_cls:
+            mock_engine = MagicMock()
+            mock_engine.curate.side_effect = openai.InternalServerError(
+                message="Internal Server Error",
+                response=MagicMock(status_code=500, headers={}),
+                body={"error": {"message": "Internal Server Error"}},
+            )
+            mock_cls.return_value = mock_engine
+            result = runner.invoke(main, ["curate", "--prompt", "find funny moments"])
+
+        combined = (result.output or "") + (result.stderr or "")
+        assert "error" in combined.lower()
+        # Exception must be None or SystemExit (not a raw openai exception)
+        assert result.exception is None or isinstance(result.exception, SystemExit)
+
+    def test_api_status_error_no_raw_traceback(self, runner: CliRunner) -> None:
+        """APIStatusError must not propagate as an unhandled exception (no raw traceback)."""
+        import openai
+
+        with patch(
+            "snipsnap.cli.load_all_transcriptions",
+            return_value=[_SAMPLE_TRANSCRIPTION],
+        ), patch("snipsnap.cli.CurationEngine") as mock_cls:
+            mock_engine = MagicMock()
+            mock_engine.curate.side_effect = openai.InternalServerError(
+                message="Internal Server Error",
+                response=MagicMock(status_code=500, headers={}),
+                body={"error": {"message": "Internal Server Error"}},
+            )
+            mock_cls.return_value = mock_engine
+            result = runner.invoke(main, ["curate", "--prompt", "find funny moments"])
+
+        # Must not be an unhandled openai exception
+        assert not isinstance(result.exception, openai.APIStatusError)
+
+    def test_openai_base_error_exits_nonzero(self, runner: CliRunner) -> None:
+        """An unmapped openai.OpenAIError must produce non-zero exit."""
+        import openai
+
+        with patch(
+            "snipsnap.cli.load_all_transcriptions",
+            return_value=[_SAMPLE_TRANSCRIPTION],
+        ), patch("snipsnap.cli.CurationEngine") as mock_cls:
+            mock_engine = MagicMock()
+            mock_engine.curate.side_effect = openai.OpenAIError(
+                "Some unexpected SDK error"
+            )
+            mock_cls.return_value = mock_engine
+            result = runner.invoke(main, ["curate", "--prompt", "find funny moments"])
+
+        assert result.exit_code != 0
+
+    def test_openai_base_error_shows_user_friendly_message(
+        self, runner: CliRunner
+    ) -> None:
+        """User-friendly message must be shown for unmapped OpenAIError."""
+        import openai
+
+        with patch(
+            "snipsnap.cli.load_all_transcriptions",
+            return_value=[_SAMPLE_TRANSCRIPTION],
+        ), patch("snipsnap.cli.CurationEngine") as mock_cls:
+            mock_engine = MagicMock()
+            mock_engine.curate.side_effect = openai.OpenAIError(
+                "Some unexpected SDK error"
+            )
+            mock_cls.return_value = mock_engine
+            result = runner.invoke(main, ["curate", "--prompt", "find funny moments"])
+
+        combined = (result.output or "") + (result.stderr or "")
+        assert "error" in combined.lower()
+        # Exception must be None or SystemExit (not a raw openai exception)
+        assert result.exception is None or isinstance(result.exception, SystemExit)
+
+    def test_openai_base_error_no_raw_traceback(self, runner: CliRunner) -> None:
+        """OpenAIError must not propagate as an unhandled exception (no raw traceback)."""
+        import openai
+
+        with patch(
+            "snipsnap.cli.load_all_transcriptions",
+            return_value=[_SAMPLE_TRANSCRIPTION],
+        ), patch("snipsnap.cli.CurationEngine") as mock_cls:
+            mock_engine = MagicMock()
+            mock_engine.curate.side_effect = openai.OpenAIError(
+                "Some unexpected SDK error"
+            )
+            mock_cls.return_value = mock_engine
+            result = runner.invoke(main, ["curate", "--prompt", "find funny moments"])
+
+        # Must not be an unhandled openai exception
+        assert not isinstance(result.exception, openai.OpenAIError)

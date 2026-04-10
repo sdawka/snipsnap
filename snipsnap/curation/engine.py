@@ -294,6 +294,21 @@ class CurationEngine:
                 transcriptions, prompt, model
             )
 
+        # ------------------------------------------------------------------
+        # Validate segments against input transcriptions
+        # ------------------------------------------------------------------
+        if segments:
+            original_count = len(segments)
+            segments = self._validate_and_filter_segments(segments, transcriptions)
+            if not segments:
+                raise CurationError(
+                    f"All {original_count} segment(s) returned by the LLM were invalid "
+                    "(source files not found in transcriptions or timestamps out of bounds). "
+                    "The LLM response cannot be used to build a cut list."
+                )
+            # Recalculate total_duration based on the validated (filtered) segments
+            total_duration = float(sum(max(0.0, s.end - s.start) for s in segments))
+
         cut_list = CutList(
             id=str(uuid.uuid4()),
             prompt=prompt,
@@ -318,6 +333,61 @@ class CurationEngine:
                 "OpenRouter API key is not configured. "
                 "Set the OPENROUTER_API_KEY environment variable or add it to your .env file."
             )
+
+    def _validate_and_filter_segments(
+        self,
+        segments: List[CutSegment],
+        transcriptions: List[Transcription],
+    ) -> List[CutSegment]:
+        """Validate and filter *segments* against *transcriptions*.
+
+        Each segment is checked for:
+        * ``source_file`` existing in the set of input transcriptions.
+        * Timestamps satisfying ``0 <= start < end <= transcription.duration``.
+
+        Invalid segments are discarded with a warning log message.
+
+        Args:
+            segments: Candidate segments from the LLM response.
+            transcriptions: Transcriptions that were provided to the LLM.
+
+        Returns:
+            List of segments that passed all validation checks.
+        """
+        transcription_map: dict[str, Transcription] = {
+            t.source_file: t for t in transcriptions
+        }
+
+        valid: List[CutSegment] = []
+        for seg in segments:
+            # Validate source_file exists in input transcriptions
+            if seg.source_file not in transcription_map:
+                logger.warning(
+                    "Discarding segment: source_file %r not found in input "
+                    "transcriptions. Known files: %s",
+                    seg.source_file,
+                    list(transcription_map.keys()),
+                )
+                continue
+
+            transcription = transcription_map[seg.source_file]
+
+            # Validate timestamps: 0 <= start < end <= duration
+            if not (seg.start >= 0 and seg.start < seg.end and seg.end <= transcription.duration):
+                logger.warning(
+                    "Discarding segment: invalid timestamps for %r "
+                    "(start=%.3f, end=%.3f, duration=%.3f). "
+                    "Required: 0 <= start < end <= duration.",
+                    seg.source_file,
+                    seg.start,
+                    seg.end,
+                    transcription.duration,
+                )
+                continue
+
+            valid.append(seg)
+
+        return valid
 
     def _call_llm(self, model: str, system: str, user: str) -> str:
         """Make a single chat-completion call and return the response text.
