@@ -440,7 +440,15 @@ def export(
     # ------------------------------------------------------------------
     ext_map = {"edl": ".edl", "fcpxml": ".fcpxml", "davinci": ".py"}
     ext = ext_map[output_format.lower()]
-    output_path = Path(output) if output else Path(f"{cut_list_id}{ext}")
+
+    if output:
+        output_path = Path(output)
+    else:
+        # Default: <data_dir>/exports/<cut-list-id><ext>
+        effective_data_dir = data_path if data_path is not None else get_config().data_dir
+        exports_dir = effective_data_dir / "exports"
+        exports_dir.mkdir(parents=True, exist_ok=True)
+        output_path = exports_dir / f"{cut_list_id}{ext}"
 
     # ------------------------------------------------------------------
     # Generate export (lazy imports keep module startup fast)
@@ -465,6 +473,7 @@ def export(
             click.echo(f"Error: Unsupported format: {fmt}", err=True)
             sys.exit(1)
 
+        output_path.parent.mkdir(parents=True, exist_ok=True)
         output_path.write_text(content, encoding="utf-8")
     except ImportError as exc:
         click.echo(f"Error: Export module not available: {exc}", err=True)

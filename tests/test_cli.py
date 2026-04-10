@@ -7,6 +7,8 @@ lightweight stub that returns deterministic transcriptions.
 
 from __future__ import annotations
 
+import py_compile
+import xml.etree.ElementTree as ET
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import List, Optional
@@ -1599,3 +1601,1017 @@ class TestCurateOpenAIErrors:
 
         # Must not be an unhandled openai exception
         assert not isinstance(result.exception, openai.OpenAIError)
+
+
+# ===========================================================================
+# export — happy path: EDL format
+# ===========================================================================
+
+
+class TestExportHappyPathEdl:
+    """Happy path tests for the export command producing EDL output."""
+
+    def test_edl_export_exits_zero(
+        self, runner: CliRunner, tmp_path: Path
+    ) -> None:
+        """EDL export must exit 0 on success."""
+        with patch("snipsnap.cli.load_cut_list", return_value=_SAMPLE_CUT_LIST):
+            result = runner.invoke(
+                main,
+                ["export", _SAMPLE_CUT_LIST.id, "--format", "edl", "--data-dir", str(tmp_path)],
+            )
+        assert result.exit_code == 0
+
+    def test_edl_creates_output_file(
+        self, runner: CliRunner, tmp_path: Path
+    ) -> None:
+        """EDL export must create a file at the expected path."""
+        with patch("snipsnap.cli.load_cut_list", return_value=_SAMPLE_CUT_LIST):
+            runner.invoke(
+                main,
+                ["export", _SAMPLE_CUT_LIST.id, "--format", "edl", "--data-dir", str(tmp_path)],
+            )
+        expected = tmp_path / "exports" / f"{_SAMPLE_CUT_LIST.id}.edl"
+        assert expected.exists(), f"Expected EDL file not found at {expected}"
+
+    def test_edl_output_path_printed_to_stdout(
+        self, runner: CliRunner, tmp_path: Path
+    ) -> None:
+        """The output file path must be printed to stdout."""
+        with patch("snipsnap.cli.load_cut_list", return_value=_SAMPLE_CUT_LIST):
+            result = runner.invoke(
+                main,
+                ["export", _SAMPLE_CUT_LIST.id, "--format", "edl", "--data-dir", str(tmp_path)],
+            )
+        assert "Exported to:" in result.output
+
+    def test_edl_content_has_title_line(
+        self, runner: CliRunner, tmp_path: Path
+    ) -> None:
+        """EDL file must begin with a TITLE: line."""
+        with patch("snipsnap.cli.load_cut_list", return_value=_SAMPLE_CUT_LIST):
+            runner.invoke(
+                main,
+                ["export", _SAMPLE_CUT_LIST.id, "--format", "edl", "--data-dir", str(tmp_path)],
+            )
+        edl_path = tmp_path / "exports" / f"{_SAMPLE_CUT_LIST.id}.edl"
+        content = edl_path.read_text(encoding="utf-8")
+        assert content.startswith("TITLE:")
+
+    def test_edl_content_has_fcm_line(
+        self, runner: CliRunner, tmp_path: Path
+    ) -> None:
+        """EDL file must contain a FCM: line."""
+        with patch("snipsnap.cli.load_cut_list", return_value=_SAMPLE_CUT_LIST):
+            runner.invoke(
+                main,
+                ["export", _SAMPLE_CUT_LIST.id, "--format", "edl", "--data-dir", str(tmp_path)],
+            )
+        edl_path = tmp_path / "exports" / f"{_SAMPLE_CUT_LIST.id}.edl"
+        content = edl_path.read_text(encoding="utf-8")
+        assert "FCM: NON-DROP FRAME" in content
+
+    def test_edl_content_has_event_for_each_segment(
+        self, runner: CliRunner, tmp_path: Path
+    ) -> None:
+        """EDL must have one numbered event per cut list segment."""
+        import re
+
+        with patch("snipsnap.cli.load_cut_list", return_value=_SAMPLE_CUT_LIST):
+            runner.invoke(
+                main,
+                ["export", _SAMPLE_CUT_LIST.id, "--format", "edl", "--data-dir", str(tmp_path)],
+            )
+        edl_path = tmp_path / "exports" / f"{_SAMPLE_CUT_LIST.id}.edl"
+        content = edl_path.read_text(encoding="utf-8")
+        events = [ln for ln in content.splitlines() if re.match(r"^\d{3}\s", ln)]
+        assert len(events) == len(_SAMPLE_CUT_LIST.segments)
+
+    def test_edl_content_includes_descriptions(
+        self, runner: CliRunner, tmp_path: Path
+    ) -> None:
+        """EDL must include segment descriptions as comment lines."""
+        with patch("snipsnap.cli.load_cut_list", return_value=_SAMPLE_CUT_LIST):
+            runner.invoke(
+                main,
+                ["export", _SAMPLE_CUT_LIST.id, "--format", "edl", "--data-dir", str(tmp_path)],
+            )
+        edl_path = tmp_path / "exports" / f"{_SAMPLE_CUT_LIST.id}.edl"
+        content = edl_path.read_text(encoding="utf-8")
+        # Descriptions are written as "* <description>" comment lines
+        assert "Hilarious opening moment" in content or "funny" in content.lower()
+
+    def test_edl_file_is_utf8_text(
+        self, runner: CliRunner, tmp_path: Path
+    ) -> None:
+        """EDL file must be readable as UTF-8 text."""
+        with patch("snipsnap.cli.load_cut_list", return_value=_SAMPLE_CUT_LIST):
+            runner.invoke(
+                main,
+                ["export", _SAMPLE_CUT_LIST.id, "--format", "edl", "--data-dir", str(tmp_path)],
+            )
+        edl_path = tmp_path / "exports" / f"{_SAMPLE_CUT_LIST.id}.edl"
+        content = edl_path.read_text(encoding="utf-8")
+        assert isinstance(content, str)
+
+    def test_edl_empty_cut_list_has_header_only(
+        self, runner: CliRunner, tmp_path: Path
+    ) -> None:
+        """EDL for empty cut list must have only header lines, no events."""
+        import re
+
+        empty_cl = CutList(
+            id="empty-export-id",
+            prompt="nothing",
+            theme="Empty",
+            created_at=datetime(2024, 1, 1, tzinfo=timezone.utc),
+            total_duration=0.0,
+            segments=[],
+        )
+        with patch("snipsnap.cli.load_cut_list", return_value=empty_cl):
+            result = runner.invoke(
+                main,
+                ["export", empty_cl.id, "--format", "edl", "--data-dir", str(tmp_path)],
+            )
+        assert result.exit_code == 0
+        edl_path = tmp_path / "exports" / f"{empty_cl.id}.edl"
+        content = edl_path.read_text(encoding="utf-8")
+        events = [ln for ln in content.splitlines() if re.match(r"^\d{3}\s", ln)]
+        assert len(events) == 0
+        assert "TITLE:" in content
+        assert "FCM:" in content
+
+
+# ===========================================================================
+# export — happy path: FCPXML format
+# ===========================================================================
+
+
+class TestExportHappyPathFcpxml:
+    """Happy path tests for the export command producing FCPXML output."""
+
+    def _parse_fcpxml(self, content: str) -> ET.Element:
+        """Helper: parse FCPXML content, skipping DOCTYPE."""
+        lines = [ln for ln in content.splitlines() if not ln.startswith("<!DOCTYPE")]
+        return ET.fromstring("\n".join(lines))
+
+    def test_fcpxml_export_exits_zero(
+        self, runner: CliRunner, tmp_path: Path
+    ) -> None:
+        with patch("snipsnap.cli.load_cut_list", return_value=_SAMPLE_CUT_LIST):
+            result = runner.invoke(
+                main,
+                ["export", _SAMPLE_CUT_LIST.id, "--format", "fcpxml", "--data-dir", str(tmp_path)],
+            )
+        assert result.exit_code == 0
+
+    def test_fcpxml_creates_output_file(
+        self, runner: CliRunner, tmp_path: Path
+    ) -> None:
+        with patch("snipsnap.cli.load_cut_list", return_value=_SAMPLE_CUT_LIST):
+            runner.invoke(
+                main,
+                ["export", _SAMPLE_CUT_LIST.id, "--format", "fcpxml", "--data-dir", str(tmp_path)],
+            )
+        expected = tmp_path / "exports" / f"{_SAMPLE_CUT_LIST.id}.fcpxml"
+        assert expected.exists()
+
+    def test_fcpxml_output_path_printed_to_stdout(
+        self, runner: CliRunner, tmp_path: Path
+    ) -> None:
+        with patch("snipsnap.cli.load_cut_list", return_value=_SAMPLE_CUT_LIST):
+            result = runner.invoke(
+                main,
+                ["export", _SAMPLE_CUT_LIST.id, "--format", "fcpxml", "--data-dir", str(tmp_path)],
+            )
+        assert "Exported to:" in result.output
+
+    def test_fcpxml_content_is_valid_xml(
+        self, runner: CliRunner, tmp_path: Path
+    ) -> None:
+        """FCPXML file must be parseable as XML."""
+        with patch("snipsnap.cli.load_cut_list", return_value=_SAMPLE_CUT_LIST):
+            runner.invoke(
+                main,
+                ["export", _SAMPLE_CUT_LIST.id, "--format", "fcpxml", "--data-dir", str(tmp_path)],
+            )
+        fcpxml_path = tmp_path / "exports" / f"{_SAMPLE_CUT_LIST.id}.fcpxml"
+        content = fcpxml_path.read_text(encoding="utf-8")
+        root = self._parse_fcpxml(content)
+        assert root is not None
+
+    def test_fcpxml_root_version_1_8(
+        self, runner: CliRunner, tmp_path: Path
+    ) -> None:
+        """FCPXML root element must have version='1.8'."""
+        with patch("snipsnap.cli.load_cut_list", return_value=_SAMPLE_CUT_LIST):
+            runner.invoke(
+                main,
+                ["export", _SAMPLE_CUT_LIST.id, "--format", "fcpxml", "--data-dir", str(tmp_path)],
+            )
+        fcpxml_path = tmp_path / "exports" / f"{_SAMPLE_CUT_LIST.id}.fcpxml"
+        content = fcpxml_path.read_text(encoding="utf-8")
+        root = self._parse_fcpxml(content)
+        assert root.tag == "fcpxml"
+        assert root.attrib.get("version") == "1.8"
+
+    def test_fcpxml_has_required_structure(
+        self, runner: CliRunner, tmp_path: Path
+    ) -> None:
+        """FCPXML must have library/event/project/sequence/spine hierarchy."""
+        with patch("snipsnap.cli.load_cut_list", return_value=_SAMPLE_CUT_LIST):
+            runner.invoke(
+                main,
+                ["export", _SAMPLE_CUT_LIST.id, "--format", "fcpxml", "--data-dir", str(tmp_path)],
+            )
+        fcpxml_path = tmp_path / "exports" / f"{_SAMPLE_CUT_LIST.id}.fcpxml"
+        content = fcpxml_path.read_text(encoding="utf-8")
+        root = self._parse_fcpxml(content)
+        assert root.find("resources") is not None
+        assert root.find("library") is not None
+        assert root.find("library/event") is not None
+        assert root.find("library/event/project") is not None
+        assert root.find("library/event/project/sequence") is not None
+        assert root.find("library/event/project/sequence/spine") is not None
+
+    def test_fcpxml_asset_clip_refs_match_assets(
+        self, runner: CliRunner, tmp_path: Path
+    ) -> None:
+        """Every asset-clip ref must match an asset id in resources."""
+        with patch("snipsnap.cli.load_cut_list", return_value=_SAMPLE_CUT_LIST):
+            runner.invoke(
+                main,
+                ["export", _SAMPLE_CUT_LIST.id, "--format", "fcpxml", "--data-dir", str(tmp_path)],
+            )
+        fcpxml_path = tmp_path / "exports" / f"{_SAMPLE_CUT_LIST.id}.fcpxml"
+        content = fcpxml_path.read_text(encoding="utf-8")
+        root = self._parse_fcpxml(content)
+        asset_ids = {a.attrib["id"] for a in root.findall("resources/asset")}
+        clip_refs = {c.attrib["ref"] for c in root.findall(".//spine/asset-clip")}
+        assert clip_refs.issubset(asset_ids)
+
+    def test_fcpxml_spine_has_correct_clip_count(
+        self, runner: CliRunner, tmp_path: Path
+    ) -> None:
+        """Spine must have one asset-clip per segment."""
+        with patch("snipsnap.cli.load_cut_list", return_value=_SAMPLE_CUT_LIST):
+            runner.invoke(
+                main,
+                ["export", _SAMPLE_CUT_LIST.id, "--format", "fcpxml", "--data-dir", str(tmp_path)],
+            )
+        fcpxml_path = tmp_path / "exports" / f"{_SAMPLE_CUT_LIST.id}.fcpxml"
+        content = fcpxml_path.read_text(encoding="utf-8")
+        root = self._parse_fcpxml(content)
+        clips = root.findall(".//spine/asset-clip")
+        assert len(clips) == len(_SAMPLE_CUT_LIST.segments)
+
+    def test_fcpxml_empty_cut_list_spine_is_empty(
+        self, runner: CliRunner, tmp_path: Path
+    ) -> None:
+        """Empty cut list FCPXML spine must have no asset-clips."""
+        empty_cl = CutList(
+            id="empty-fcpxml-id",
+            prompt="nothing",
+            theme="Empty",
+            created_at=datetime(2024, 1, 1, tzinfo=timezone.utc),
+            total_duration=0.0,
+            segments=[],
+        )
+        with patch("snipsnap.cli.load_cut_list", return_value=empty_cl):
+            result = runner.invoke(
+                main,
+                ["export", empty_cl.id, "--format", "fcpxml", "--data-dir", str(tmp_path)],
+            )
+        assert result.exit_code == 0
+        fcpxml_path = tmp_path / "exports" / f"{empty_cl.id}.fcpxml"
+        content = fcpxml_path.read_text(encoding="utf-8")
+        root = self._parse_fcpxml(content)
+        spine = root.find(".//spine")
+        assert spine is not None
+        assert len(list(spine)) == 0
+
+
+# ===========================================================================
+# export — happy path: DaVinci format
+# ===========================================================================
+
+
+class TestExportHappyPathDavinci:
+    """Happy path tests for the export command producing DaVinci Resolve output."""
+
+    def test_davinci_export_exits_zero(
+        self, runner: CliRunner, tmp_path: Path
+    ) -> None:
+        with patch("snipsnap.cli.load_cut_list", return_value=_SAMPLE_CUT_LIST):
+            result = runner.invoke(
+                main,
+                ["export", _SAMPLE_CUT_LIST.id, "--format", "davinci", "--data-dir", str(tmp_path)],
+            )
+        assert result.exit_code == 0
+
+    def test_davinci_creates_output_file(
+        self, runner: CliRunner, tmp_path: Path
+    ) -> None:
+        with patch("snipsnap.cli.load_cut_list", return_value=_SAMPLE_CUT_LIST):
+            runner.invoke(
+                main,
+                ["export", _SAMPLE_CUT_LIST.id, "--format", "davinci", "--data-dir", str(tmp_path)],
+            )
+        expected = tmp_path / "exports" / f"{_SAMPLE_CUT_LIST.id}.py"
+        assert expected.exists()
+
+    def test_davinci_output_path_printed_to_stdout(
+        self, runner: CliRunner, tmp_path: Path
+    ) -> None:
+        with patch("snipsnap.cli.load_cut_list", return_value=_SAMPLE_CUT_LIST):
+            result = runner.invoke(
+                main,
+                ["export", _SAMPLE_CUT_LIST.id, "--format", "davinci", "--data-dir", str(tmp_path)],
+            )
+        assert "Exported to:" in result.output
+
+    def test_davinci_content_is_valid_python(
+        self, runner: CliRunner, tmp_path: Path
+    ) -> None:
+        """Generated DaVinci script must pass py_compile."""
+        with patch("snipsnap.cli.load_cut_list", return_value=_SAMPLE_CUT_LIST):
+            runner.invoke(
+                main,
+                ["export", _SAMPLE_CUT_LIST.id, "--format", "davinci", "--data-dir", str(tmp_path)],
+            )
+        py_path = tmp_path / "exports" / f"{_SAMPLE_CUT_LIST.id}.py"
+        try:
+            py_compile.compile(str(py_path), doraise=True)
+        except py_compile.PyCompileError as e:
+            pytest.fail(f"Generated DaVinci script has syntax errors: {e}")
+
+    def test_davinci_content_imports_davinci_module(
+        self, runner: CliRunner, tmp_path: Path
+    ) -> None:
+        with patch("snipsnap.cli.load_cut_list", return_value=_SAMPLE_CUT_LIST):
+            runner.invoke(
+                main,
+                ["export", _SAMPLE_CUT_LIST.id, "--format", "davinci", "--data-dir", str(tmp_path)],
+            )
+        py_path = tmp_path / "exports" / f"{_SAMPLE_CUT_LIST.id}.py"
+        content = py_path.read_text(encoding="utf-8")
+        assert "import DaVinciResolveScript" in content
+
+    def test_davinci_content_calls_scriptapp(
+        self, runner: CliRunner, tmp_path: Path
+    ) -> None:
+        with patch("snipsnap.cli.load_cut_list", return_value=_SAMPLE_CUT_LIST):
+            runner.invoke(
+                main,
+                ["export", _SAMPLE_CUT_LIST.id, "--format", "davinci", "--data-dir", str(tmp_path)],
+            )
+        py_path = tmp_path / "exports" / f"{_SAMPLE_CUT_LIST.id}.py"
+        content = py_path.read_text(encoding="utf-8")
+        assert 'scriptapp("Resolve")' in content
+
+    def test_davinci_content_calls_create_project(
+        self, runner: CliRunner, tmp_path: Path
+    ) -> None:
+        with patch("snipsnap.cli.load_cut_list", return_value=_SAMPLE_CUT_LIST):
+            runner.invoke(
+                main,
+                ["export", _SAMPLE_CUT_LIST.id, "--format", "davinci", "--data-dir", str(tmp_path)],
+            )
+        py_path = tmp_path / "exports" / f"{_SAMPLE_CUT_LIST.id}.py"
+        content = py_path.read_text(encoding="utf-8")
+        assert "CreateProject" in content
+
+    def test_davinci_content_calls_import_media(
+        self, runner: CliRunner, tmp_path: Path
+    ) -> None:
+        with patch("snipsnap.cli.load_cut_list", return_value=_SAMPLE_CUT_LIST):
+            runner.invoke(
+                main,
+                ["export", _SAMPLE_CUT_LIST.id, "--format", "davinci", "--data-dir", str(tmp_path)],
+            )
+        py_path = tmp_path / "exports" / f"{_SAMPLE_CUT_LIST.id}.py"
+        content = py_path.read_text(encoding="utf-8")
+        assert "ImportMedia" in content
+
+    def test_davinci_content_contains_source_file_path(
+        self, runner: CliRunner, tmp_path: Path
+    ) -> None:
+        """DaVinci script must reference source file paths from the cut list."""
+        with patch("snipsnap.cli.load_cut_list", return_value=_SAMPLE_CUT_LIST):
+            runner.invoke(
+                main,
+                ["export", _SAMPLE_CUT_LIST.id, "--format", "davinci", "--data-dir", str(tmp_path)],
+            )
+        py_path = tmp_path / "exports" / f"{_SAMPLE_CUT_LIST.id}.py"
+        content = py_path.read_text(encoding="utf-8")
+        # _SAMPLE_CUT_LIST.segments all reference /videos/clip_a.mp4
+        assert "clip_a.mp4" in content
+
+    def test_davinci_empty_cut_list_is_valid_python(
+        self, runner: CliRunner, tmp_path: Path
+    ) -> None:
+        """DaVinci script for empty cut list must be valid Python."""
+        empty_cl = CutList(
+            id="empty-davinci-id",
+            prompt="nothing",
+            theme="Empty",
+            created_at=datetime(2024, 1, 1, tzinfo=timezone.utc),
+            total_duration=0.0,
+            segments=[],
+        )
+        with patch("snipsnap.cli.load_cut_list", return_value=empty_cl):
+            result = runner.invoke(
+                main,
+                ["export", empty_cl.id, "--format", "davinci", "--data-dir", str(tmp_path)],
+            )
+        assert result.exit_code == 0
+        py_path = tmp_path / "exports" / f"{empty_cl.id}.py"
+        try:
+            py_compile.compile(str(py_path), doraise=True)
+        except py_compile.PyCompileError as e:
+            pytest.fail(f"Empty cut list DaVinci script has syntax errors: {e}")
+
+
+# ===========================================================================
+# export — --output flag
+# ===========================================================================
+
+
+class TestExportOutputFlag:
+    """Tests for the --output flag controlling the output file path."""
+
+    def test_output_flag_writes_to_specified_path(
+        self, runner: CliRunner, tmp_path: Path
+    ) -> None:
+        """--output must write the file to the given path."""
+        custom_path = tmp_path / "my_custom_output.edl"
+        with patch("snipsnap.cli.load_cut_list", return_value=_SAMPLE_CUT_LIST):
+            result = runner.invoke(
+                main,
+                [
+                    "export",
+                    _SAMPLE_CUT_LIST.id,
+                    "--format",
+                    "edl",
+                    "--output",
+                    str(custom_path),
+                ],
+            )
+        assert result.exit_code == 0
+        assert custom_path.exists()
+
+    def test_output_flag_path_printed_to_stdout(
+        self, runner: CliRunner, tmp_path: Path
+    ) -> None:
+        """The custom output path must be printed to stdout."""
+        custom_path = tmp_path / "output.edl"
+        with patch("snipsnap.cli.load_cut_list", return_value=_SAMPLE_CUT_LIST):
+            result = runner.invoke(
+                main,
+                [
+                    "export",
+                    _SAMPLE_CUT_LIST.id,
+                    "--format",
+                    "edl",
+                    "--output",
+                    str(custom_path),
+                ],
+            )
+        assert "Exported to:" in result.output
+        assert str(custom_path) in result.output or "output.edl" in result.output
+
+    def test_default_output_in_data_dir_exports_subdir(
+        self, runner: CliRunner, tmp_path: Path
+    ) -> None:
+        """Default output path must be under <data_dir>/exports/."""
+        with patch("snipsnap.cli.load_cut_list", return_value=_SAMPLE_CUT_LIST):
+            runner.invoke(
+                main,
+                [
+                    "export",
+                    _SAMPLE_CUT_LIST.id,
+                    "--format",
+                    "edl",
+                    "--data-dir",
+                    str(tmp_path),
+                ],
+            )
+        expected = tmp_path / "exports" / f"{_SAMPLE_CUT_LIST.id}.edl"
+        assert expected.exists(), (
+            f"Expected export file at {expected}, "
+            f"contents of {tmp_path}: {list(tmp_path.rglob('*'))}"
+        )
+
+    def test_output_flag_fcpxml_to_custom_path(
+        self, runner: CliRunner, tmp_path: Path
+    ) -> None:
+        """--output must work with FCPXML format too."""
+        custom_path = tmp_path / "my_cut.fcpxml"
+        with patch("snipsnap.cli.load_cut_list", return_value=_SAMPLE_CUT_LIST):
+            result = runner.invoke(
+                main,
+                [
+                    "export",
+                    _SAMPLE_CUT_LIST.id,
+                    "--format",
+                    "fcpxml",
+                    "--output",
+                    str(custom_path),
+                ],
+            )
+        assert result.exit_code == 0
+        assert custom_path.exists()
+
+    def test_output_flag_davinci_to_custom_path(
+        self, runner: CliRunner, tmp_path: Path
+    ) -> None:
+        """--output must work with DaVinci format too."""
+        custom_path = tmp_path / "my_script.py"
+        with patch("snipsnap.cli.load_cut_list", return_value=_SAMPLE_CUT_LIST):
+            result = runner.invoke(
+                main,
+                [
+                    "export",
+                    _SAMPLE_CUT_LIST.id,
+                    "--format",
+                    "davinci",
+                    "--output",
+                    str(custom_path),
+                ],
+            )
+        assert result.exit_code == 0
+        assert custom_path.exists()
+
+
+# ===========================================================================
+# export — --fps flag
+# ===========================================================================
+
+
+class TestExportFpsFlag:
+    """Tests for the --fps flag controlling the frame rate."""
+
+    def test_default_fps_24_produces_valid_edl(
+        self, runner: CliRunner, tmp_path: Path
+    ) -> None:
+        """Default 24fps must produce a valid EDL with frames in 0–23 range."""
+        import re
+
+        with patch("snipsnap.cli.load_cut_list", return_value=_SAMPLE_CUT_LIST):
+            result = runner.invoke(
+                main,
+                ["export", _SAMPLE_CUT_LIST.id, "--format", "edl", "--data-dir", str(tmp_path)],
+            )
+        assert result.exit_code == 0
+        edl_path = tmp_path / "exports" / f"{_SAMPLE_CUT_LIST.id}.edl"
+        content = edl_path.read_text(encoding="utf-8")
+        assert "FCM: NON-DROP FRAME" in content
+        tc_pattern = re.compile(r"\d{2}:\d{2}:\d{2}:\d{2}")
+        for tc in tc_pattern.findall(content):
+            ff = int(tc.split(":")[-1])
+            assert 0 <= ff < 24, f"Frame {ff} out of range for 24fps in {tc}"
+
+    def test_fps_30_produces_valid_edl(
+        self, runner: CliRunner, tmp_path: Path
+    ) -> None:
+        """--fps 30 must produce an EDL with frames in 0–29 range."""
+        import re
+
+        cut_list_30fps = CutList(
+            id="fps-30-test-id",
+            prompt="test",
+            theme="Test",
+            created_at=datetime(2024, 1, 1, tzinfo=timezone.utc),
+            total_duration=5.0,
+            segments=[
+                CutSegment(
+                    source_file="/videos/test.mp4",
+                    start=0.0,
+                    end=5.0,
+                    description="Test",
+                    order=0,
+                )
+            ],
+        )
+        with patch("snipsnap.cli.load_cut_list", return_value=cut_list_30fps):
+            result = runner.invoke(
+                main,
+                [
+                    "export",
+                    cut_list_30fps.id,
+                    "--format",
+                    "edl",
+                    "--fps",
+                    "30",
+                    "--data-dir",
+                    str(tmp_path),
+                ],
+            )
+        assert result.exit_code == 0
+        edl_path = tmp_path / "exports" / f"{cut_list_30fps.id}.edl"
+        content = edl_path.read_text(encoding="utf-8")
+        tc_pattern = re.compile(r"\d{2}:\d{2}:\d{2}:\d{2}")
+        for tc in tc_pattern.findall(content):
+            ff = int(tc.split(":")[-1])
+            assert 0 <= ff < 30, f"Frame {ff} out of range for 30fps in {tc}"
+
+    def test_fps_25_produces_valid_edl(
+        self, runner: CliRunner, tmp_path: Path
+    ) -> None:
+        """--fps 25 must produce an EDL with frames in 0–24 range."""
+        import re
+
+        cut_list_25fps = CutList(
+            id="fps-25-test-id",
+            prompt="test",
+            theme="Test",
+            created_at=datetime(2024, 1, 1, tzinfo=timezone.utc),
+            total_duration=3.0,
+            segments=[
+                CutSegment(
+                    source_file="/videos/test.mp4",
+                    start=1.0,
+                    end=4.0,
+                    description="Test",
+                    order=0,
+                )
+            ],
+        )
+        with patch("snipsnap.cli.load_cut_list", return_value=cut_list_25fps):
+            result = runner.invoke(
+                main,
+                [
+                    "export",
+                    cut_list_25fps.id,
+                    "--format",
+                    "edl",
+                    "--fps",
+                    "25",
+                    "--data-dir",
+                    str(tmp_path),
+                ],
+            )
+        assert result.exit_code == 0
+        edl_path = tmp_path / "exports" / f"{cut_list_25fps.id}.edl"
+        content = edl_path.read_text(encoding="utf-8")
+        tc_pattern = re.compile(r"\d{2}:\d{2}:\d{2}:\d{2}")
+        for tc in tc_pattern.findall(content):
+            ff = int(tc.split(":")[-1])
+            assert 0 <= ff < 25, f"Frame {ff} out of range for 25fps in {tc}"
+
+    def test_fps_flag_affects_fcpxml_frame_duration(
+        self, runner: CliRunner, tmp_path: Path
+    ) -> None:
+        """--fps must set the frameDuration attribute in FCPXML."""
+        with patch("snipsnap.cli.load_cut_list", return_value=_SAMPLE_CUT_LIST):
+            result = runner.invoke(
+                main,
+                [
+                    "export",
+                    _SAMPLE_CUT_LIST.id,
+                    "--format",
+                    "fcpxml",
+                    "--fps",
+                    "25",
+                    "--data-dir",
+                    str(tmp_path),
+                ],
+            )
+        assert result.exit_code == 0
+        fcpxml_path = tmp_path / "exports" / f"{_SAMPLE_CUT_LIST.id}.fcpxml"
+        content = fcpxml_path.read_text(encoding="utf-8")
+        lines = [ln for ln in content.splitlines() if not ln.startswith("<!DOCTYPE")]
+        root = ET.fromstring("\n".join(lines))
+        fmt = root.find("resources/format")
+        assert fmt is not None
+        assert fmt.attrib.get("frameDuration") == "1/25s"
+
+    def test_fps_flag_affects_davinci_frame_rate(
+        self, runner: CliRunner, tmp_path: Path
+    ) -> None:
+        """--fps must set FRAME_RATE in the DaVinci script."""
+        with patch("snipsnap.cli.load_cut_list", return_value=_SAMPLE_CUT_LIST):
+            result = runner.invoke(
+                main,
+                [
+                    "export",
+                    _SAMPLE_CUT_LIST.id,
+                    "--format",
+                    "davinci",
+                    "--fps",
+                    "30",
+                    "--data-dir",
+                    str(tmp_path),
+                ],
+            )
+        assert result.exit_code == 0
+        py_path = tmp_path / "exports" / f"{_SAMPLE_CUT_LIST.id}.py"
+        content = py_path.read_text(encoding="utf-8")
+        assert "FRAME_RATE = 30" in content
+
+
+# ===========================================================================
+# export — from storage (pipeline simulation)
+# ===========================================================================
+
+
+class TestExportFromStorage:
+    """Tests that verify export reads cut lists from real on-disk storage.
+
+    These tests simulate the curate -> export portion of the CLI pipeline
+    by saving a cut list to disk (as the curation engine would), then
+    running the export command.
+    """
+
+    def _save_cut_list_to_disk(self, cut_list: CutList, data_dir: Path) -> None:
+        """Helper: persist a cut list to the given data directory."""
+        from snipsnap.storage import save_cut_list as _save
+
+        _save(cut_list, data_dir)
+
+    def test_export_reads_cut_list_from_disk(
+        self, runner: CliRunner, tmp_path: Path
+    ) -> None:
+        """Export must load the cut list from the on-disk storage."""
+        self._save_cut_list_to_disk(_SAMPLE_CUT_LIST, tmp_path)
+        result = runner.invoke(
+            main,
+            [
+                "export",
+                _SAMPLE_CUT_LIST.id,
+                "--format",
+                "edl",
+                "--data-dir",
+                str(tmp_path),
+            ],
+        )
+        assert result.exit_code == 0
+
+    def test_pipeline_edl_from_storage(
+        self, runner: CliRunner, tmp_path: Path
+    ) -> None:
+        """Curate->Export pipeline: cut list saved to disk -> EDL exported."""
+        pipeline_cl = CutList(
+            id="pipeline-edl-001",
+            prompt="find highlights",
+            theme="Highlights",
+            created_at=datetime(2024, 6, 1, tzinfo=timezone.utc),
+            total_duration=8.0,
+            segments=[
+                CutSegment(
+                    source_file="/source/video_a.mp4",
+                    start=0.0,
+                    end=3.0,
+                    description="Opening shot",
+                    order=0,
+                ),
+                CutSegment(
+                    source_file="/source/video_b.mp4",
+                    start=10.0,
+                    end=15.0,
+                    description="Main event",
+                    order=1,
+                ),
+            ],
+        )
+        self._save_cut_list_to_disk(pipeline_cl, tmp_path)
+        result = runner.invoke(
+            main,
+            [
+                "export",
+                pipeline_cl.id,
+                "--format",
+                "edl",
+                "--data-dir",
+                str(tmp_path),
+            ],
+        )
+        assert result.exit_code == 0
+        edl_path = tmp_path / "exports" / f"{pipeline_cl.id}.edl"
+        assert edl_path.exists()
+        content = edl_path.read_text(encoding="utf-8")
+        assert "TITLE: Highlights" in content
+        assert "FCM: NON-DROP FRAME" in content
+        # Both source files should appear in comments
+        assert "video_a.mp4" in content
+        assert "video_b.mp4" in content
+        # Descriptions should appear
+        assert "Opening shot" in content
+        assert "Main event" in content
+
+    def test_pipeline_fcpxml_from_storage(
+        self, runner: CliRunner, tmp_path: Path
+    ) -> None:
+        """Curate->Export pipeline: cut list saved to disk -> FCPXML exported."""
+        pipeline_cl = CutList(
+            id="pipeline-fcpxml-001",
+            prompt="find highlights",
+            theme="Highlights",
+            created_at=datetime(2024, 6, 1, tzinfo=timezone.utc),
+            total_duration=5.0,
+            segments=[
+                CutSegment(
+                    source_file="/source/video_a.mp4",
+                    start=0.0,
+                    end=5.0,
+                    description="Opening",
+                    order=0,
+                ),
+            ],
+        )
+        self._save_cut_list_to_disk(pipeline_cl, tmp_path)
+        result = runner.invoke(
+            main,
+            [
+                "export",
+                pipeline_cl.id,
+                "--format",
+                "fcpxml",
+                "--data-dir",
+                str(tmp_path),
+            ],
+        )
+        assert result.exit_code == 0
+        fcpxml_path = tmp_path / "exports" / f"{pipeline_cl.id}.fcpxml"
+        assert fcpxml_path.exists()
+        content = fcpxml_path.read_text(encoding="utf-8")
+        lines = [ln for ln in content.splitlines() if not ln.startswith("<!DOCTYPE")]
+        root = ET.fromstring("\n".join(lines))
+        assert root.tag == "fcpxml"
+        assert root.attrib.get("version") == "1.8"
+        clips = root.findall(".//spine/asset-clip")
+        assert len(clips) == 1
+
+    def test_pipeline_davinci_from_storage(
+        self, runner: CliRunner, tmp_path: Path
+    ) -> None:
+        """Curate->Export pipeline: cut list saved to disk -> DaVinci script exported."""
+        pipeline_cl = CutList(
+            id="pipeline-davinci-001",
+            prompt="find highlights",
+            theme="Highlights",
+            created_at=datetime(2024, 6, 1, tzinfo=timezone.utc),
+            total_duration=5.0,
+            segments=[
+                CutSegment(
+                    source_file="/source/video_a.mp4",
+                    start=2.0,
+                    end=7.0,
+                    description="Key moment",
+                    order=0,
+                ),
+            ],
+        )
+        self._save_cut_list_to_disk(pipeline_cl, tmp_path)
+        result = runner.invoke(
+            main,
+            [
+                "export",
+                pipeline_cl.id,
+                "--format",
+                "davinci",
+                "--data-dir",
+                str(tmp_path),
+            ],
+        )
+        assert result.exit_code == 0
+        py_path = tmp_path / "exports" / f"{pipeline_cl.id}.py"
+        assert py_path.exists()
+        content = py_path.read_text(encoding="utf-8")
+        assert "import DaVinciResolveScript" in content
+        assert "video_a.mp4" in content
+        try:
+            py_compile.compile(str(py_path), doraise=True)
+        except py_compile.PyCompileError as e:
+            pytest.fail(f"Pipeline DaVinci script has syntax errors: {e}")
+
+    def test_cut_list_data_flows_correctly_to_edl(
+        self, runner: CliRunner, tmp_path: Path
+    ) -> None:
+        """Cut list segments must be correctly reflected in the EDL output."""
+        precise_cl = CutList(
+            id="precise-flow-001",
+            prompt="test",
+            theme="Precision Test",
+            created_at=datetime(2024, 6, 1, tzinfo=timezone.utc),
+            total_duration=3.0,
+            segments=[
+                CutSegment(
+                    source_file="/source/precise.mp4",
+                    start=5.0,
+                    end=8.0,
+                    description="Precise segment",
+                    order=0,
+                ),
+            ],
+        )
+        self._save_cut_list_to_disk(precise_cl, tmp_path)
+        result = runner.invoke(
+            main,
+            [
+                "export",
+                precise_cl.id,
+                "--format",
+                "edl",
+                "--data-dir",
+                str(tmp_path),
+            ],
+        )
+        assert result.exit_code == 0
+        edl_path = tmp_path / "exports" / f"{precise_cl.id}.edl"
+        content = edl_path.read_text(encoding="utf-8")
+        # At 24fps: 5.0s = 00:00:05:00, 8.0s = 00:00:08:00
+        assert "00:00:05:00" in content
+        assert "00:00:08:00" in content
+
+    def test_all_three_formats_from_same_storage_cut_list(
+        self, runner: CliRunner, tmp_path: Path
+    ) -> None:
+        """All three export formats must succeed from the same cut list on disk."""
+        shared_cl = CutList(
+            id="shared-export-001",
+            prompt="test",
+            theme="Shared",
+            created_at=datetime(2024, 6, 1, tzinfo=timezone.utc),
+            total_duration=5.0,
+            segments=[
+                CutSegment(
+                    source_file="/source/shared.mp4",
+                    start=0.0,
+                    end=5.0,
+                    description="Shared segment",
+                    order=0,
+                ),
+            ],
+        )
+        self._save_cut_list_to_disk(shared_cl, tmp_path)
+
+        for fmt, ext in [("edl", ".edl"), ("fcpxml", ".fcpxml"), ("davinci", ".py")]:
+            result = runner.invoke(
+                main,
+                [
+                    "export",
+                    shared_cl.id,
+                    "--format",
+                    fmt,
+                    "--data-dir",
+                    str(tmp_path),
+                ],
+            )
+            assert result.exit_code == 0, (
+                f"Export to {fmt} failed: {result.output}"
+            )
+            out_path = tmp_path / "exports" / f"{shared_cl.id}{ext}"
+            assert out_path.exists(), f"Export file not found for {fmt}: {out_path}"
+
+    def test_multi_source_cut_list_exports_correctly(
+        self, runner: CliRunner, tmp_path: Path
+    ) -> None:
+        """Multi-source cut lists must export with correct source references."""
+        multi_cl = CutList(
+            id="multi-source-export-001",
+            prompt="test",
+            theme="Multi-Source",
+            created_at=datetime(2024, 6, 1, tzinfo=timezone.utc),
+            total_duration=8.0,
+            segments=[
+                CutSegment(
+                    source_file="/source/wide.mp4",
+                    start=0.0,
+                    end=3.0,
+                    description="Wide shot",
+                    order=0,
+                ),
+                CutSegment(
+                    source_file="/source/closeup.mp4",
+                    start=5.0,
+                    end=10.0,
+                    description="Closeup",
+                    order=1,
+                ),
+                CutSegment(
+                    source_file="/source/wide.mp4",
+                    start=15.0,
+                    end=20.0,
+                    description="Wide again",
+                    order=2,
+                ),
+            ],
+        )
+        self._save_cut_list_to_disk(multi_cl, tmp_path)
+        result = runner.invoke(
+            main,
+            [
+                "export",
+                multi_cl.id,
+                "--format",
+                "edl",
+                "--data-dir",
+                str(tmp_path),
+            ],
+        )
+        assert result.exit_code == 0
+        edl_path = tmp_path / "exports" / f"{multi_cl.id}.edl"
+        content = edl_path.read_text(encoding="utf-8")
+        assert "wide.mp4" in content
+        assert "closeup.mp4" in content
