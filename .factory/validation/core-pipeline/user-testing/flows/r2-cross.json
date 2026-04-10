@@ -1,0 +1,171 @@
+{
+  "groupId": "r2-cross",
+  "milestone": "core-pipeline",
+  "testedAt": "2026-04-10T21:19:11.544067+00:00",
+  "isolation": {
+    "surface": "CLI",
+    "sandboxRoot": "/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/r2-cross",
+    "dataDir": "/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/r2-cross/data",
+    "videoDir": "/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/r2-cross/videos",
+    "evidenceDir": "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/core-pipeline/r2-cross",
+    "env": {
+      "SNIPSNAP_DATA_DIR": "/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/r2-cross/data"
+    }
+  },
+  "toolsUsed": [
+    "cli-subprocess",
+    "ffmpeg",
+    "python3"
+  ],
+  "commandsRun": [
+    {
+      "command": "mkdir -p \"/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/core-pipeline/r2-cross\" \"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/r2-cross/data\" \"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/r2-cross/videos\" \"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/r2-cross/exports\"",
+      "exitCode": 0,
+      "evidence": null
+    },
+    {
+      "command": "say -o \"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/r2-cross/videos/clip1.aiff\" \"Clip one covers quick editing workflow tips and timeline setup.\" > \"/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/core-pipeline/r2-cross/01-say-clip1.txt\" 2>&1; echo \"exit_code=$?\" >> \"/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/core-pipeline/r2-cross/01-say-clip1.txt\"",
+      "exitCode": 0,
+      "evidence": "core-pipeline/r2-cross/01-say-clip1.txt"
+    },
+    {
+      "command": "say -o \"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/r2-cross/videos/clip2.aiff\" \"Clip two discusses color correction basics and audio balancing for social videos.\" > \"/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/core-pipeline/r2-cross/02-say-clip2.txt\" 2>&1; echo \"exit_code=$?\" >> \"/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/core-pipeline/r2-cross/02-say-clip2.txt\"",
+      "exitCode": 0,
+      "evidence": "core-pipeline/r2-cross/02-say-clip2.txt"
+    },
+    {
+      "command": "say -o \"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/r2-cross/videos/clip3.aiff\" \"Clip three explains exporting presets and final quality checks before delivery.\" > \"/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/core-pipeline/r2-cross/03-say-clip3.txt\" 2>&1; echo \"exit_code=$?\" >> \"/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/core-pipeline/r2-cross/03-say-clip3.txt\"",
+      "exitCode": 0,
+      "evidence": "core-pipeline/r2-cross/03-say-clip3.txt"
+    },
+    {
+      "command": "/opt/homebrew/bin/ffmpeg -y -f lavfi -i color=c=black:s=320x240:d=7 -i \"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/r2-cross/videos/clip1.aiff\" -c:v libx264 -c:a aac -shortest \"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/r2-cross/videos/clip1.mp4\" > \"/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/core-pipeline/r2-cross/04-ffmpeg-clip1.txt\" 2>&1; echo \"exit_code=$?\" >> \"/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/core-pipeline/r2-cross/04-ffmpeg-clip1.txt\"",
+      "exitCode": 0,
+      "evidence": "core-pipeline/r2-cross/04-ffmpeg-clip1.txt"
+    },
+    {
+      "command": "/opt/homebrew/bin/ffmpeg -y -f lavfi -i color=c=black:s=320x240:d=7 -i \"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/r2-cross/videos/clip2.aiff\" -c:v libx264 -c:a aac -shortest \"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/r2-cross/videos/clip2.mp4\" > \"/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/core-pipeline/r2-cross/05-ffmpeg-clip2.txt\" 2>&1; echo \"exit_code=$?\" >> \"/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/core-pipeline/r2-cross/05-ffmpeg-clip2.txt\"",
+      "exitCode": 0,
+      "evidence": "core-pipeline/r2-cross/05-ffmpeg-clip2.txt"
+    },
+    {
+      "command": "/opt/homebrew/bin/ffmpeg -y -f lavfi -i color=c=black:s=320x240:d=7 -i \"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/r2-cross/videos/clip3.aiff\" -c:v libx264 -c:a aac -shortest \"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/r2-cross/videos/clip3.mp4\" > \"/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/core-pipeline/r2-cross/06-ffmpeg-clip3.txt\" 2>&1; echo \"exit_code=$?\" >> \"/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/core-pipeline/r2-cross/06-ffmpeg-clip3.txt\"",
+      "exitCode": 0,
+      "evidence": "core-pipeline/r2-cross/06-ffmpeg-clip3.txt"
+    },
+    {
+      "command": "SNIPSNAP_DATA_DIR=\"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/r2-cross/data\" \"/Users/sdawka/Code/snipsnap/.venv/bin/snipsnap\" transcribe \"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/r2-cross/videos\" > \"/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/core-pipeline/r2-cross/07-transcribe.txt\" 2>&1; echo \"exit_code=$?\" >> \"/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/core-pipeline/r2-cross/07-transcribe.txt\"",
+      "exitCode": 0,
+      "evidence": "core-pipeline/r2-cross/07-transcribe.txt"
+    },
+    {
+      "command": "SNIPSNAP_DATA_DIR=\"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/r2-cross/data\" \"/Users/sdawka/Code/snipsnap/.venv/bin/snipsnap\" curate --prompt \"Select one concise highlight from each source clip; include all clips; preserve chronological order.\" > \"/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/core-pipeline/r2-cross/08-curate.txt\" 2>&1; echo \"exit_code=$?\" >> \"/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/core-pipeline/r2-cross/08-curate.txt\"",
+      "exitCode": 0,
+      "evidence": "core-pipeline/r2-cross/08-curate.txt"
+    },
+    {
+      "command": "SNIPSNAP_DATA_DIR=\"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/r2-cross/data\" \"/Users/sdawka/Code/snipsnap/.venv/bin/snipsnap\" status > \"/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/core-pipeline/r2-cross/09-status.txt\" 2>&1; echo \"exit_code=$?\" >> \"/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/core-pipeline/r2-cross/09-status.txt\"",
+      "exitCode": 0,
+      "evidence": "core-pipeline/r2-cross/09-status.txt"
+    },
+    {
+      "command": "SNIPSNAP_DATA_DIR=\"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/r2-cross/data\" \"/Users/sdawka/Code/snipsnap/.venv/bin/snipsnap\" export --format edl afa83236-a38f-4a34-97cc-dab7f7515138 --output \"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/r2-cross/exports/cross.edl\" > \"/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/core-pipeline/r2-cross/10-export-edl.txt\" 2>&1; echo \"exit_code=$?\" >> \"/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/core-pipeline/r2-cross/10-export-edl.txt\"",
+      "exitCode": 1,
+      "evidence": "core-pipeline/r2-cross/10-export-edl.txt"
+    },
+    {
+      "command": "SNIPSNAP_DATA_DIR=\"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/r2-cross/data\" \"/Users/sdawka/Code/snipsnap/.venv/bin/snipsnap\" export --format fcpxml afa83236-a38f-4a34-97cc-dab7f7515138 --output \"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/r2-cross/exports/cross.fcpxml\" > \"/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/core-pipeline/r2-cross/11-export-fcpxml.txt\" 2>&1; echo \"exit_code=$?\" >> \"/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/core-pipeline/r2-cross/11-export-fcpxml.txt\"",
+      "exitCode": 1,
+      "evidence": "core-pipeline/r2-cross/11-export-fcpxml.txt"
+    },
+    {
+      "command": "SNIPSNAP_DATA_DIR=\"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/r2-cross/data\" \"/Users/sdawka/Code/snipsnap/.venv/bin/snipsnap\" export --format davinci afa83236-a38f-4a34-97cc-dab7f7515138 --output \"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/r2-cross/exports/cross_davinci.py\" > \"/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/core-pipeline/r2-cross/12-export-davinci.txt\" 2>&1; echo \"exit_code=$?\" >> \"/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/core-pipeline/r2-cross/12-export-davinci.txt\"",
+      "exitCode": 1,
+      "evidence": "core-pipeline/r2-cross/12-export-davinci.txt"
+    },
+    {
+      "command": "python3 - <<'PY' > \"/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/core-pipeline/r2-cross/13-cross-validation.txt\" 2>&1 ... PY",
+      "exitCode": 0,
+      "evidence": "core-pipeline/r2-cross/13-cross-validation.txt"
+    }
+  ],
+  "assertionResults": [
+    {
+      "id": "VAL-CROSS-005",
+      "title": "Cut List JSON Structure Passes to Export",
+      "status": "blocked",
+      "steps": [
+        {
+          "action": "Run transcription + curation in assigned sandbox and inspect generated cut list JSON",
+          "expected": "Cut list contains source_file, start/end, description, and order per entry",
+          "observed": "Cut list `afa83236-a38f-4a34-97cc-dab7f7515138.json` created with 2 segments and all required keys per segment"
+        },
+        {
+          "action": "Run `snipsnap export --format edl <cut-list-id>` and check 1:1 event mapping",
+          "expected": "Export succeeds and output events map 1:1 to cut list entries",
+          "observed": "Export failed with `Error: Export module not available: No module named 'snipsnap.export.edl'` (exit 1), so 1:1 mapping could not be exercised"
+        }
+      ],
+      "evidence": {
+        "terminalSnapshots": [
+          "core-pipeline/r2-cross/07-transcribe.txt",
+          "core-pipeline/r2-cross/08-curate.txt",
+          "core-pipeline/r2-cross/10-export-edl.txt",
+          "core-pipeline/r2-cross/13-cross-validation.txt"
+        ],
+        "artifacts": [
+          "core-pipeline/r2-cross/13-cross-validation.txt"
+        ],
+        "cutList": "/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/r2-cross/data/cut_lists/afa83236-a38f-4a34-97cc-dab7f7515138.json"
+      },
+      "issues": "Blocked by missing export module (`snipsnap.export.edl`) in current environment; export stage is unavailable for mapping validation."
+    },
+    {
+      "id": "VAL-CROSS-011",
+      "title": "Export All Three Formats From Same Cut List",
+      "status": "blocked",
+      "steps": [
+        {
+          "action": "Use single cut list ID from curation and export to EDL/FCPXML/DaVinci",
+          "expected": "All three exports succeed and can be compared for equivalent clip order/timing",
+          "observed": "All three exports failed: EDL missing `snipsnap.export.edl`, FCPXML missing `snipsnap.export.fcpxml`, DaVinci missing `snipsnap.export.davinci` (all exit 1)"
+        }
+      ],
+      "evidence": {
+        "terminalSnapshots": [
+          "core-pipeline/r2-cross/08-curate.txt",
+          "core-pipeline/r2-cross/10-export-edl.txt",
+          "core-pipeline/r2-cross/11-export-fcpxml.txt",
+          "core-pipeline/r2-cross/12-export-davinci.txt",
+          "core-pipeline/r2-cross/13-cross-validation.txt"
+        ],
+        "artifacts": [
+          "core-pipeline/r2-cross/13-cross-validation.txt"
+        ]
+      },
+      "issues": "Blocked because export modules for all three formats are unavailable, preventing file generation and cross-format timing/order comparison."
+    }
+  ],
+  "frictions": [
+    {
+      "description": "Curation discarded one candidate segment from clip3 due end timestamp slightly exceeding computed source duration (4.600 > 4.598), reducing cut list to 2 segments.",
+      "resolved": true,
+      "resolution": "Continued with produced cut list ID and validated required cut list structure for available segments.",
+      "affectedAssertions": [
+        "VAL-CROSS-005",
+        "VAL-CROSS-011"
+      ]
+    }
+  ],
+  "blockers": [
+    {
+      "description": "Export command cannot load format modules in this environment (`snipsnap.export.edl`, `snipsnap.export.fcpxml`, `snipsnap.export.davinci`).",
+      "affectedAssertions": [
+        "VAL-CROSS-005",
+        "VAL-CROSS-011"
+      ],
+      "quickFixAttempted": "Retried all three exports from the same cut list in the assigned sandbox; each failed with module-not-available error and no output files generated."
+    }
+  ],
+  "summary": "Retested 2 assertions (VAL-CROSS-005, VAL-CROSS-011): both blocked. Curation and cut-list structure validation succeeded, but all export formats failed due missing export modules in the current environment."
+}

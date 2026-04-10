@@ -1,0 +1,149 @@
+{
+  "groupId": "r2-trans-cli",
+  "testedAt": "2026-04-10T21:10:57Z",
+  "isolation": {
+    "surface": "CLI",
+    "sandboxRoot": "/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/r2-trans-cli",
+    "dataDir": "/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/r2-trans-cli/data",
+    "videoDir": "/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/r2-trans-cli/videos",
+    "evidenceDir": "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/core-pipeline/r2-trans-cli",
+    "env": {
+      "SNIPSNAP_DATA_DIR": "/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/r2-trans-cli/data"
+    },
+    "cliPath": "/Users/sdawka/Code/snipsnap/.venv/bin/snipsnap"
+  },
+  "toolsUsed": [
+    "Execute",
+    "Read",
+    "LS",
+    "Glob",
+    "ffmpeg",
+    "say",
+    "snipsnap CLI"
+  ],
+  "commandsRun": [
+    {
+      "command": "ffmpeg -y -f lavfi -i color=c=black:size=320x240:rate=25:duration=6 -f lavfi -i anullsrc=r=16000:cl=mono -shortest -c:v libx264 -pix_fmt yuv420p -c:a aac \"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/r2-trans-cli/videos/nospeech.mp4\" > \"/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/core-pipeline/r2-trans-cli/VAL-TRANS-013-create-nospeech-video.txt\" 2>&1",
+      "exitCode": 0,
+      "evidence": "core-pipeline/r2-trans-cli/VAL-TRANS-013-create-nospeech-video.txt"
+    },
+    {
+      "command": "say -o \"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/r2-trans-cli/videos/speech.aiff\" \"This is a short clip for SnipSnap transcription testing.\" > \"/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/core-pipeline/r2-trans-cli/VAL-TRANS-007-generate-speech-audio.txt\" 2>&1",
+      "exitCode": 0,
+      "evidence": "core-pipeline/r2-trans-cli/VAL-TRANS-007-generate-speech-audio.txt"
+    },
+    {
+      "command": "ffmpeg -y -f lavfi -i color=c=blue:size=320x240:rate=25:duration=8 -i \"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/r2-trans-cli/videos/speech.aiff\" -shortest -c:v libx264 -pix_fmt yuv420p -c:a aac \"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/r2-trans-cli/videos/speech.mp4\" > \"/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/core-pipeline/r2-trans-cli/VAL-TRANS-007-create-speech-video.txt\" 2>&1",
+      "exitCode": 0,
+      "evidence": "core-pipeline/r2-trans-cli/VAL-TRANS-007-create-speech-video.txt"
+    },
+    {
+      "command": "SNIPSNAP_DATA_DIR=\"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/r2-trans-cli/data\" \"/Users/sdawka/Code/snipsnap/.venv/bin/snipsnap\" transcribe \"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/r2-trans-cli/videos\" > \"/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/core-pipeline/r2-trans-cli/transcribe-run.txt\" 2>&1; ec=$?; echo \"EXIT_CODE:$ec\" >> \"/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/core-pipeline/r2-trans-cli/transcribe-run.txt\"; exit $ec",
+      "exitCode": 0,
+      "evidence": "core-pipeline/r2-trans-cli/transcribe-run.txt"
+    },
+    {
+      "command": "SNIPSNAP_DATA_DIR=\"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/r2-trans-cli/data\" \"/Users/sdawka/Code/snipsnap/.venv/bin/snipsnap\" curate --prompt \"Find concise highlights\" > \"/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/core-pipeline/r2-trans-cli/curate-run.txt\" 2>&1; ec=$?; echo \"EXIT_CODE:$ec\" >> \"/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/core-pipeline/r2-trans-cli/curate-run.txt\"; exit $ec",
+      "exitCode": 0,
+      "evidence": "core-pipeline/r2-trans-cli/curate-run.txt"
+    },
+    {
+      "command": "SNIPSNAP_DATA_DIR=\"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/r2-trans-cli/data\" \"/Users/sdawka/Code/snipsnap/.venv/bin/snipsnap\" status > \"/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/core-pipeline/r2-trans-cli/status-run.txt\" 2>&1; ec=$?; echo \"EXIT_CODE:$ec\" >> \"/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/core-pipeline/r2-trans-cli/status-run.txt\"; exit $ec",
+      "exitCode": 0,
+      "evidence": "core-pipeline/r2-trans-cli/status-run.txt"
+    },
+    {
+      "command": "SNIPSNAP_DATA_DIR=\"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/r2-trans-cli/data\" \"/Users/sdawka/Code/snipsnap/.venv/bin/snipsnap\" export --format edl be19e3be-f25a-4ff0-a3a8-0cd13468a541 > \"/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/core-pipeline/r2-trans-cli/export-run.txt\" 2>&1; ec=$?; echo \"EXIT_CODE:$ec\" >> \"/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/core-pipeline/r2-trans-cli/export-run.txt\"; exit $ec",
+      "exitCode": 1,
+      "evidence": "core-pipeline/r2-trans-cli/export-run.txt"
+    }
+  ],
+  "assertionResults": [
+    {
+      "id": "VAL-TRANS-007",
+      "title": "Transcription JSON Is Valid for Downstream Curation",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Run transcribe on sandbox videos",
+          "expected": "Transcription JSON files generated without format errors",
+          "observed": "2 transcription JSON files generated; command exited 0"
+        },
+        {
+          "action": "Run curate with prompt against generated transcriptions",
+          "expected": "Curate reads transcription JSON and produces cut list",
+          "observed": "Curate exited 0 and produced cut list be19e3be-f25a-4ff0-a3a8-0cd13468a541"
+        }
+      ],
+      "evidence": {
+        "terminalSnapshots": [
+          "core-pipeline/r2-trans-cli/transcribe-run.txt",
+          "core-pipeline/r2-trans-cli/curate-run.txt"
+        ],
+        "artifacts": [
+          "core-pipeline/r2-trans-cli/VAL-TRANS-007-speech-transcription.json",
+          "core-pipeline/r2-trans-cli/VAL-CLI-004-cut-list.json"
+        ]
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-TRANS-013",
+      "title": "Video With No Speech Produces Valid Empty Transcription",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Create no-speech video fixture and transcribe",
+          "expected": "Transcription succeeds and produces JSON with empty segments",
+          "observed": "nospeech_248fb367.json created with \"segments\": []"
+        },
+        {
+          "action": "Run curate with no-speech file present in transcription set",
+          "expected": "Curation handles no-speech transcription gracefully without crashing",
+          "observed": "Curate command exited 0 and generated a valid cut list"
+        }
+      ],
+      "evidence": {
+        "terminalSnapshots": [
+          "core-pipeline/r2-trans-cli/VAL-TRANS-013-create-nospeech-video.txt",
+          "core-pipeline/r2-trans-cli/transcribe-run.txt",
+          "core-pipeline/r2-trans-cli/curate-run.txt"
+        ],
+        "artifacts": [
+          "core-pipeline/r2-trans-cli/VAL-TRANS-013-nospeech-transcription.json"
+        ]
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-CLI-004",
+      "title": "Cut List IDs Are Discoverable",
+      "status": "fail",
+      "steps": [
+        {
+          "action": "Run snipsnap status",
+          "expected": "Cut list IDs are listed for discovery",
+          "observed": "Status listed cut list ID be19e3be-f25a-4ff0-a3a8-0cd13468a541"
+        },
+        {
+          "action": "Run export with discovered cut list ID",
+          "expected": "Export succeeds using the discovered ID",
+          "observed": "Export command accepted the ID but failed with: Export module not available: No module named 'snipsnap.export.edl' (exit 1)"
+        }
+      ],
+      "evidence": {
+        "terminalSnapshots": [
+          "core-pipeline/r2-trans-cli/status-run.txt",
+          "core-pipeline/r2-trans-cli/export-run.txt"
+        ],
+        "artifacts": [
+          "core-pipeline/r2-trans-cli/VAL-CLI-004-cut-list.json"
+        ]
+      },
+      "issues": "Discovered cut list ID could not be used successfully in export due missing export module (snipsnap.export.edl)."
+    }
+  ],
+  "frictions": [],
+  "blockers": [],
+  "summary": "Retested 3 assertions: VAL-TRANS-007 and VAL-TRANS-013 passed. VAL-CLI-004 failed because export with discovered cut list ID exits 1 due missing export module, despite ID discovery working via status output."
+}

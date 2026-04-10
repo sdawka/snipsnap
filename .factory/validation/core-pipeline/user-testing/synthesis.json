@@ -1,96 +1,49 @@
 {
   "milestone": "core-pipeline",
-  "round": 1,
+  "round": 2,
   "status": "fail",
   "assertionsSummary": {
-    "total": 33,
-    "passed": 20,
+    "total": 13,
+    "passed": 9,
     "failed": 0,
-    "blocked": 13
+    "blocked": 4
   },
   "passedAssertions": [
-    "VAL-CLI-001",
-    "VAL-CLI-002",
-    "VAL-CLI-003",
-    "VAL-CONFIG-001",
-    "VAL-CUR-006",
-    "VAL-CUR-007",
-    "VAL-CUR-008",
-    "VAL-CUR-011",
-    "VAL-CUR-013",
-    "VAL-TRANS-001",
-    "VAL-TRANS-002",
-    "VAL-TRANS-003",
-    "VAL-TRANS-004",
-    "VAL-TRANS-005",
-    "VAL-TRANS-006",
-    "VAL-TRANS-008",
-    "VAL-TRANS-009",
-    "VAL-TRANS-010",
-    "VAL-TRANS-011",
-    "VAL-TRANS-012"
+    "VAL-CUR-001",
+    "VAL-CUR-002",
+    "VAL-CUR-003",
+    "VAL-CUR-004",
+    "VAL-CUR-005",
+    "VAL-CUR-009",
+    "VAL-CUR-010",
+    "VAL-TRANS-007",
+    "VAL-TRANS-013"
   ],
   "failedAssertions": [],
   "blockedAssertions": [
     {
       "id": "VAL-CLI-004",
-      "blockedBy": "Blocked by invalid/revoked OPENROUTER_API_KEY preventing cut list generation required to validate ID discoverability + successful export acceptance."
+      "blockedBy": "Blocked by unavailable export module (`snipsnap.export.edl` missing); ID discovery works, but successful export acceptance depends on export milestone implementation."
     },
     {
       "id": "VAL-CROSS-005",
-      "blockedBy": "Blocked by invalid/revoked OPENROUTER_API_KEY; curation cannot create cut list, so export mapping cannot be validated."
+      "blockedBy": "Blocked by unavailable export module (`snipsnap.export.edl` missing); cut list structure is valid but export mapping cannot be executed in core milestone."
     },
     {
       "id": "VAL-CROSS-011",
-      "blockedBy": "Blocked by upstream curation authentication failure; required source cut list for 3-format export comparison is unavailable."
-    },
-    {
-      "id": "VAL-CUR-001",
-      "blockedBy": "Blocked by external dependency: OpenRouter API authentication failed (invalid/revoked API key)."
-    },
-    {
-      "id": "VAL-CUR-002",
-      "blockedBy": "No cut list artifact produced because curation is blocked by invalid OpenRouter credentials."
-    },
-    {
-      "id": "VAL-CUR-003",
-      "blockedBy": "Prerequisite cut list generation blocked by OpenRouter authentication failure."
-    },
-    {
-      "id": "VAL-CUR-004",
-      "blockedBy": "Prerequisite cut list generation blocked by OpenRouter authentication failure."
-    },
-    {
-      "id": "VAL-CUR-005",
-      "blockedBy": "Prerequisite cut list generation blocked by OpenRouter authentication failure."
-    },
-    {
-      "id": "VAL-CUR-009",
-      "blockedBy": "Blocked by external dependency: configured OpenRouter API key was rejected (invalid/revoked), so curation output could not be produced."
-    },
-    {
-      "id": "VAL-CUR-010",
-      "blockedBy": "Blocked by OpenRouter authentication failure during curate."
+      "blockedBy": "Blocked by unavailable export modules (`snipsnap.export.edl`, `snipsnap.export.fcpxml`, `snipsnap.export.davinci`); cross-format export comparison cannot be executed in core milestone."
     },
     {
       "id": "VAL-CUR-012",
-      "blockedBy": "Blocked by OpenRouter authentication failure; prerequisite cut lists were not generated, so export independence could not be tested."
-    },
-    {
-      "id": "VAL-TRANS-007",
-      "blockedBy": "Blocked by external service credential state: configured OPENROUTER_API_KEY is invalid/revoked in this environment."
-    },
-    {
-      "id": "VAL-TRANS-013",
-      "blockedBy": "Blocked by external OpenRouter API authentication failure (invalid/revoked key), so curation behavior with no-speech input could not be fully exercised."
+      "blockedBy": "Blocked by unavailable export module (`snipsnap.export.edl` missing); distinct cut lists were created, but independent exportability cannot be verified in core milestone."
     }
   ],
   "appliedUpdates": [
     {
       "target": "user-testing.md",
-      "description": "Added CLI flow validator isolation guidance and known dependency blocker notes (SNIPSNAP_DATA_DIR usage, venv CLI invocation, OpenRouter key requirement).",
-      "source": "setup|flow-report"
+      "description": "Updated known blocker guidance: curation now works in environment; export-dependent assertions are blocked by missing export modules in core milestone.",
+      "source": "flow-report"
     }
   ],
-  "previousRound": null
+  "previousRound": ".factory/validation/core-pipeline/user-testing/synthesis.round1.json"
 }

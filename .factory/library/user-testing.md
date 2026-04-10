@@ -50,3 +50,8 @@ Testing surface, required testing skills/tools, resource cost classification per
 
 - Successful curation assertions require a valid `OPENROUTER_API_KEY`.
 - If `.env` contains a placeholder/revoked key, curation-dependent assertions should be marked blocked with captured auth-error evidence.
+- Core-pipeline rerun (round 2) confirmed curation works in this environment, but export-dependent assertions are currently blocked by missing modules:
+  - `snipsnap.export.edl`
+  - `snipsnap.export.fcpxml`
+  - `snipsnap.export.davinci`
+  This indicates export validation should be deferred to the `export` milestone unless those modules are present.

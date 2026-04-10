@@ -1,0 +1,308 @@
+{
+  "groupId": "r2-cur-core",
+  "milestone": "core-pipeline",
+  "testedAt": "2026-04-10T21:14:35.792682+00:00",
+  "isolation": {
+    "surface": "CLI",
+    "sandboxRoot": "/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/r2-cur-core",
+    "dataDir": "/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/r2-cur-core/data",
+    "videoDir": "/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/r2-cur-core/videos",
+    "evidenceDir": "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/core-pipeline/r2-cur-core",
+    "env": {
+      "SNIPSNAP_DATA_DIR": "/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/r2-cur-core/data"
+    }
+  },
+  "toolsUsed": [
+    "cli-subprocess",
+    "ffmpeg",
+    "python3"
+  ],
+  "commandsRun": [
+    {
+      "command": "mkdir -p \"/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/core-pipeline/r2-cur-core\" \"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/r2-cur-core/data\" \"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/r2-cur-core/videos\"",
+      "exitCode": 0,
+      "evidence": null
+    },
+    {
+      "command": "say -o \"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/r2-cur-core/videos/single.aiff\" \"This clip discusses mountain hiking tips and scenic travel moments.\"",
+      "exitCode": 0,
+      "evidence": "core-pipeline/r2-cur-core/01-say-single.txt"
+    },
+    {
+      "command": "/opt/homebrew/bin/ffmpeg -y -f lavfi -i color=c=black:s=320x240:d=6 -i \"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/r2-cur-core/videos/single.aiff\" -c:v libx264 -c:a aac -shortest \"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/r2-cur-core/videos/single.mp4\"",
+      "exitCode": 0,
+      "evidence": "core-pipeline/r2-cur-core/02-ffmpeg-single.txt"
+    },
+    {
+      "command": "SNIPSNAP_DATA_DIR=\"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/r2-cur-core/data\" \"/Users/sdawka/Code/snipsnap/.venv/bin/snipsnap\" transcribe \"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/r2-cur-core/videos\"",
+      "exitCode": 0,
+      "evidence": "core-pipeline/r2-cur-core/03-transcribe-single.txt"
+    },
+    {
+      "command": "SNIPSNAP_DATA_DIR=\"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/r2-cur-core/data\" \"/Users/sdawka/Code/snipsnap/.venv/bin/snipsnap\" status",
+      "exitCode": 0,
+      "evidence": "core-pipeline/r2-cur-core/04-status-after-single-transcribe.txt"
+    },
+    {
+      "command": "SNIPSNAP_DATA_DIR=\"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/r2-cur-core/data\" \"/Users/sdawka/Code/snipsnap/.venv/bin/snipsnap\" curate --prompt \"Select one concise highlight from the transcript\"",
+      "exitCode": 0,
+      "evidence": "core-pipeline/r2-cur-core/05-VAL-CUR-010-curate-single-video.txt"
+    },
+    {
+      "command": "say -o \"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/r2-cur-core/videos/clip2.aiff\" \"This second clip covers quick cooking tips for busy evenings.\"",
+      "exitCode": 0,
+      "evidence": "core-pipeline/r2-cur-core/06-say-clip2.txt"
+    },
+    {
+      "command": "/opt/homebrew/bin/ffmpeg -y -f lavfi -i color=c=black:s=320x240:d=6 -i \"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/r2-cur-core/videos/clip2.aiff\" -c:v libx264 -c:a aac -shortest \"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/r2-cur-core/videos/clip2.mp4\"",
+      "exitCode": 0,
+      "evidence": "core-pipeline/r2-cur-core/07-ffmpeg-clip2.txt"
+    },
+    {
+      "command": "say -o \"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/r2-cur-core/videos/clip3.aiff\" \"This third clip explains keyboard shortcuts for efficient editing.\"",
+      "exitCode": 0,
+      "evidence": "core-pipeline/r2-cur-core/08-say-clip3.txt"
+    },
+    {
+      "command": "/opt/homebrew/bin/ffmpeg -y -f lavfi -i color=c=black:s=320x240:d=6 -i \"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/r2-cur-core/videos/clip3.aiff\" -c:v libx264 -c:a aac -shortest \"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/r2-cur-core/videos/clip3.mp4\"",
+      "exitCode": 0,
+      "evidence": "core-pipeline/r2-cur-core/09-ffmpeg-clip3.txt"
+    },
+    {
+      "command": "SNIPSNAP_DATA_DIR=\"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/r2-cur-core/data\" \"/Users/sdawka/Code/snipsnap/.venv/bin/snipsnap\" transcribe \"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/r2-cur-core/videos\"",
+      "exitCode": 0,
+      "evidence": "core-pipeline/r2-cur-core/10-transcribe-multi.txt"
+    },
+    {
+      "command": "SNIPSNAP_DATA_DIR=\"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/r2-cur-core/data\" \"/Users/sdawka/Code/snipsnap/.venv/bin/snipsnap\" status",
+      "exitCode": 0,
+      "evidence": "core-pipeline/r2-cur-core/11-status-after-multi-transcribe.txt"
+    },
+    {
+      "command": "SNIPSNAP_DATA_DIR=\"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/r2-cur-core/data\" \"/Users/sdawka/Code/snipsnap/.venv/bin/snipsnap\" curate --prompt \"find funny moments\"",
+      "exitCode": 0,
+      "evidence": "core-pipeline/r2-cur-core/12-VAL-CUR-001-005-curate-basic.txt"
+    },
+    {
+      "command": "SNIPSNAP_DATA_DIR=\"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/r2-cur-core/data\" \"/Users/sdawka/Code/snipsnap/.venv/bin/snipsnap\" curate --prompt \"Return no segments; use nonce zxqv-2026-04-10-not-present\"",
+      "exitCode": 0,
+      "evidence": "core-pipeline/r2-cur-core/13-VAL-CUR-009-curate-no-match.txt"
+    },
+    {
+      "command": "SNIPSNAP_DATA_DIR=\"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/r2-cur-core/data\" \"/Users/sdawka/Code/snipsnap/.venv/bin/snipsnap\" curate --prompt \"A\"",
+      "exitCode": 0,
+      "evidence": "core-pipeline/r2-cur-core/14-VAL-CUR-012-curate-A.txt"
+    },
+    {
+      "command": "SNIPSNAP_DATA_DIR=\"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/r2-cur-core/data\" \"/Users/sdawka/Code/snipsnap/.venv/bin/snipsnap\" curate --prompt \"B\"",
+      "exitCode": 0,
+      "evidence": "core-pipeline/r2-cur-core/15-VAL-CUR-012-curate-B.txt"
+    },
+    {
+      "command": "SNIPSNAP_DATA_DIR=\"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/r2-cur-core/data\" \"/Users/sdawka/Code/snipsnap/.venv/bin/snipsnap\" status",
+      "exitCode": 0,
+      "evidence": "core-pipeline/r2-cur-core/16-status-after-curations.txt"
+    },
+    {
+      "command": "mkdir -p \"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/r2-cur-core/exports\"",
+      "exitCode": 0,
+      "evidence": null
+    },
+    {
+      "command": "SNIPSNAP_DATA_DIR=\"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/r2-cur-core/data\" \"/Users/sdawka/Code/snipsnap/.venv/bin/snipsnap\" export --format edl c330f9f0-af6e-4f28-b3d9-bf3fe7522a0d --output \"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/r2-cur-core/exports/curate-A.edl\"",
+      "exitCode": 1,
+      "evidence": "core-pipeline/r2-cur-core/17-VAL-CUR-012-export-A.txt"
+    },
+    {
+      "command": "SNIPSNAP_DATA_DIR=\"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/r2-cur-core/data\" \"/Users/sdawka/Code/snipsnap/.venv/bin/snipsnap\" export --format edl 72c383f9-24d1-4ce5-a0c1-08a397661863 --output \"/Users/sdawka/Code/snipsnap/.factory/validation/core-pipeline/user-testing/sandboxes/r2-cur-core/exports/curate-B.edl\"",
+      "exitCode": 1,
+      "evidence": "core-pipeline/r2-cur-core/18-VAL-CUR-012-export-B.txt"
+    },
+    {
+      "command": "python3 - <<'PY' ... JSON validation checks ... PY",
+      "exitCode": 0,
+      "evidence": "core-pipeline/r2-cur-core/19-json-validation-checks.txt"
+    },
+    {
+      "command": "python3 - <<'PY' ... sandbox data tree ... PY",
+      "exitCode": 0,
+      "evidence": "core-pipeline/r2-cur-core/20-sandbox-data-tree.txt"
+    }
+  ],
+  "assertionResults": [
+    {
+      "id": "VAL-CUR-001",
+      "title": "Basic Curate Command Produces a Cut List",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Run `snipsnap curate --prompt \"find funny moments\"` after transcription in assigned sandbox",
+          "expected": "Exit code 0 and cut list JSON created with top-level `segments`, `theme`, and `total_duration`",
+          "observed": "Exit code 0; cut list `1475fe24-5a57-4ac3-890b-6b6610520549.json` created with required top-level keys"
+        }
+      ],
+      "evidence": {
+        "terminalSnapshots": [
+          "core-pipeline/r2-cur-core/12-VAL-CUR-001-005-curate-basic.txt"
+        ],
+        "artifacts": [
+          "core-pipeline/r2-cur-core/19-json-validation-checks.txt"
+        ]
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-CUR-002",
+      "title": "Cut List Output Is Valid JSON With Required Fields",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Parse generated cut list JSON and validate required field presence/types",
+          "expected": "Valid JSON; top-level `theme`/`total_duration` types valid; each segment entry matches required schema",
+          "observed": "JSON parsed successfully; type checks passed (segments array empty for this prompt, schema validation vacuously satisfied)"
+        }
+      ],
+      "evidence": {
+        "terminalSnapshots": [
+          "core-pipeline/r2-cur-core/12-VAL-CUR-001-005-curate-basic.txt",
+          "core-pipeline/r2-cur-core/19-json-validation-checks.txt"
+        ]
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-CUR-003",
+      "title": "Segment Timestamps Are Valid and Within Source Boundaries",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Cross-check cut list segments against transcription boundaries",
+          "expected": "Each segment has `start >= 0`, `end > start`, and falls within source transcription bounds",
+          "observed": "Validation script reported boundary checks valid; no out-of-range timestamps detected"
+        }
+      ],
+      "evidence": {
+        "terminalSnapshots": [
+          "core-pipeline/r2-cur-core/19-json-validation-checks.txt"
+        ]
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-CUR-004",
+      "title": "Segment Source File References an Actual Transcribed Video",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Validate each segment `source_file` maps to an existing transcription",
+          "expected": "All source_file references correspond to transcribed inputs",
+          "observed": "Source reference check passed"
+        }
+      ],
+      "evidence": {
+        "terminalSnapshots": [
+          "core-pipeline/r2-cur-core/19-json-validation-checks.txt",
+          "core-pipeline/r2-cur-core/20-sandbox-data-tree.txt"
+        ]
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-CUR-005",
+      "title": "Total Duration Equals Sum of Segment Durations",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Compute sum of `(end-start)` across segments and compare to `total_duration`",
+          "expected": "Difference <= 0.1 seconds",
+          "observed": "Computed 0.0 vs reported 0.0 (diff 0.0)"
+        }
+      ],
+      "evidence": {
+        "terminalSnapshots": [
+          "core-pipeline/r2-cur-core/19-json-validation-checks.txt"
+        ]
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-CUR-009",
+      "title": "Prompt Matching Nothing Produces Empty Segments",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Run curate with nonce no-match prompt",
+          "expected": "Exit code 0 with cut list containing `segments: []` and `total_duration: 0`",
+          "observed": "Exit code 0; generated cut list `2c17dbe6-0fdc-40ce-9d19-9b373d05a85a` has empty segments and total_duration 0.0"
+        }
+      ],
+      "evidence": {
+        "terminalSnapshots": [
+          "core-pipeline/r2-cur-core/13-VAL-CUR-009-curate-no-match.txt",
+          "core-pipeline/r2-cur-core/19-json-validation-checks.txt"
+        ]
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-CUR-010",
+      "title": "Curate Works With a Single Transcribed Video",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Transcribe only one video in sandbox and run curate",
+          "expected": "Valid cut list generated with segments (if any) referencing only that single source",
+          "observed": "Exit code 0; cut list `a9adcc1c-12fd-4f64-ba09-d8db16c59a6d` generated with one segment referencing only `single.mp4`"
+        }
+      ],
+      "evidence": {
+        "terminalSnapshots": [
+          "core-pipeline/r2-cur-core/03-transcribe-single.txt",
+          "core-pipeline/r2-cur-core/04-status-after-single-transcribe.txt",
+          "core-pipeline/r2-cur-core/05-VAL-CUR-010-curate-single-video.txt",
+          "core-pipeline/r2-cur-core/19-json-validation-checks.txt"
+        ]
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-CUR-012",
+      "title": "Multiple Curations Produce Distinct Cut Lists",
+      "status": "blocked",
+      "steps": [
+        {
+          "action": "Run `curate --prompt \"A\"` and `curate --prompt \"B\"` in same sandbox",
+          "expected": "Two distinct cut list IDs are generated and first is not overwritten",
+          "observed": "Distinct IDs were generated (`c330f9f0-af6e-4f28-b3d9-bf3fe7522a0d`, `72c383f9-24d1-4ce5-a0c1-08a397661863`) and both JSON files exist"
+        },
+        {
+          "action": "Export each cut list independently",
+          "expected": "Both IDs export successfully",
+          "observed": "Both export attempts failed with `Error: Export module not available: No module named 'snipsnap.export.edl'`"
+        }
+      ],
+      "evidence": {
+        "terminalSnapshots": [
+          "core-pipeline/r2-cur-core/14-VAL-CUR-012-curate-A.txt",
+          "core-pipeline/r2-cur-core/15-VAL-CUR-012-curate-B.txt",
+          "core-pipeline/r2-cur-core/16-status-after-curations.txt",
+          "core-pipeline/r2-cur-core/17-VAL-CUR-012-export-A.txt",
+          "core-pipeline/r2-cur-core/18-VAL-CUR-012-export-B.txt",
+          "core-pipeline/r2-cur-core/19-json-validation-checks.txt"
+        ]
+      },
+      "issues": "Blocked on unavailable export module in this milestone/environment (`snipsnap.export.edl` missing), preventing independent export verification despite distinct cut list generation."
+    }
+  ],
+  "frictions": [],
+  "blockers": [
+    {
+      "description": "`snipsnap export --format edl <cut-list-id>` fails consistently because export module import is unavailable (`No module named 'snipsnap.export.edl'`).",
+      "affectedAssertions": [
+        "VAL-CUR-012"
+      ],
+      "quickFixAttempted": "Retried export separately for both generated cut list IDs; both failed with the same module error."
+    }
+  ],
+  "summary": "Tested 8 assertions: 7 passed (VAL-CUR-001/002/003/004/005/009/010), 0 failed, 1 blocked (VAL-CUR-012) due to unavailable export module while validating independent exportability."
+}
