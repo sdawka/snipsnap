@@ -841,10 +841,23 @@
 
         formatTimestamp(secs) {
           if (secs == null || isNaN(secs)) return '0:00';
-          const h = Math.floor(secs / 3600);
-          const m = Math.floor((secs % 3600) / 60);
-          const s = Math.floor(secs % 60);
-          const ms = Math.round((secs % 1) * 10);
+          let h = Math.floor(secs / 3600);
+          let m = Math.floor((secs % 3600) / 60);
+          let s = Math.floor(secs % 60);
+          let ms = Math.round((secs % 1) * 10);
+          // Handle carry-over when rounded tenths equals 10
+          if (ms >= 10) {
+            ms = 0;
+            s += 1;
+            if (s >= 60) {
+              s = 0;
+              m += 1;
+              if (m >= 60) {
+                m = 0;
+                h += 1;
+              }
+            }
+          }
           const mm = String(m).padStart(2, '0');
           const ss = String(s).padStart(2, '0');
           if (h > 0) return `${h}:${mm}:${ss}`;

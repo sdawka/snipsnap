@@ -262,7 +262,7 @@ class TestTranscribeEndpoint:
 
     def test_returns_400_for_missing_folder_field(self) -> None:
         resp = client.post("/api/transcribe", json={})
-        assert resp.status_code == 422  # Pydantic validation
+        assert resp.status_code == 400  # validation error handler returns 400
 
     def test_transcribes_video_file(
         self, tmp_path: object, sample_transcription: Transcription
@@ -390,9 +390,9 @@ class TestCurateEndpoint:
         assert resp.status_code == 400
         assert "api key" in resp.json()["detail"].lower()
 
-    def test_returns_422_when_prompt_missing(self) -> None:
+    def test_returns_400_when_prompt_missing(self) -> None:
         resp = client.post("/api/curate", json={"model": "gpt-4"})
-        assert resp.status_code == 422
+        assert resp.status_code == 400
 
     def test_returns_cut_list_on_success(
         self,
@@ -888,7 +888,7 @@ class TestExportEndpoint:
                 "/api/export/550e8400-e29b-41d4-a716-446655440000",
                 json={},
             )
-        assert resp.status_code == 422
+        assert resp.status_code == 400
 
 
 # ---------------------------------------------------------------------------
@@ -903,3 +903,252 @@ class TestStaticFiles:
         # Should get 404 (file not found), not 422 (bad request)
         # This confirms the static mount is active
         assert resp.status_code == 404
+
+
+# ---------------------------------------------------------------------------
+# Validation error handler: RequestValidationError → HTTP 400
+# ---------------------------------------------------------------------------
+
+
+class TestRequestValidationErrorHandler:
+    """Verify that missing/invalid request fields return HTTP 400 not 422."""
+
+    def test_missing_folder_field_returns_400(self) -> None:
+        """POST /api/transcribe with no body should return 400."""
+        resp = client.post("/api/transcribe", json={})
+        assert resp.status_code == 400
+
+    def test_missing_prompt_field_returns_400(self) -> None:
+        """POST /api/curate with missing prompt field should return 400."""
+        resp = client.post("/api/curate", json={"model": "gpt-4"})
+        assert resp.status_code == 400
+
+    def test_missing_format_field_returns_400(self, sample_cut_list: CutList) -> None:
+        """POST /api/export with missing format field should return 400."""
+        with patch(
+            "snipsnap.web.app.load_cut_list",
+            return_value=sample_cut_list,
+        ):
+            resp = client.post(
+                "/api/export/550e8400-e29b-41d4-a716-446655440000",
+                json={},
+            )
+        assert resp.status_code == 400
+
+    def test_validation_error_response_has_detail_field(self) -> None:
+        """Validation error responses must include a 'detail' field."""
+        resp = client.post("/api/transcribe", json={})
+        assert resp.status_code == 400
+        body = resp.json()
+        assert "detail" in body
+
+    def test_validation_error_not_422(self) -> None:
+        """Validation errors must never return 422 — only 400."""
+        resp = client.post("/api/curate", json={})
+        assert resp.status_code != 422
+        assert resp.status_code == 400
+
+
+# ---------------------------------------------------------------------------
+# Export endpoint: fps validation
+# ---------------------------------------------------------------------------
+
+
+class TestExportFpsValidation:
+    """Verify that invalid fps values are rejected with HTTP 400."""
+
+    def test_fps_zero_returns_400(self, sample_cut_list: CutList) -> None:
+        """fps=0 must return HTTP 400."""
+        with patch(
+            "snipsnap.web.app.load_cut_list",
+            return_value=sample_cut_list,
+        ):
+            resp = client.post(
+                "/api/export/550e8400-e29b-41d4-a716-446655440000",
+                json={"format": "edl", "fps": 0},
+            )
+        assert resp.status_code == 400
+
+    def test_fps_zero_detail_mentions_fps(self, sample_cut_list: CutList) -> None:
+        """fps=0 error detail must mention fps."""
+        with patch(
+            "snipsnap.web.app.load_cut_list",
+            return_value=sample_cut_list,
+        ):
+            resp = client.post(
+                "/api/export/550e8400-e29b-41d4-a716-446655440000",
+                json={"format": "edl", "fps": 0},
+            )
+        assert "fps" in resp.json()["detail"].lower()
+
+    def test_fps_negative_returns_400(self, sample_cut_list: CutList) -> None:
+        """Negative fps must return HTTP 400."""
+        with patch(
+            "snipsnap.web.app.load_cut_list",
+            return_value=sample_cut_list,
+        ):
+            resp = client.post(
+                "/api/export/550e8400-e29b-41d4-a716-446655440000",
+                json={"format": "edl", "fps": -24},
+            )
+        assert resp.status_code == 400
+
+    def test_fps_negative_float_returns_400(self, sample_cut_list: CutList) -> None:
+        """Negative float fps must return HTTP 400."""
+        with patch(
+            "snipsnap.web.app.load_cut_list",
+            return_value=sample_cut_list,
+        ):
+            resp = client.post(
+                "/api/export/550e8400-e29b-41d4-a716-446655440000",
+                json={"format": "edl", "fps": -0.5},
+            )
+        assert resp.status_code == 400
+
+    def test_fps_non_numeric_returns_400(self, sample_cut_list: CutList) -> None:
+        """Non-numeric fps string must return HTTP 400 (via validation handler)."""
+        with patch(
+            "snipsnap.web.app.load_cut_list",
+            return_value=sample_cut_list,
+        ):
+            resp = client.post(
+                "/api/export/550e8400-e29b-41d4-a716-446655440000",
+                json={"format": "edl", "fps": "fast"},
+            )
+        assert resp.status_code == 400
+
+    def test_fps_positive_integer_returns_200(
+        self, sample_cut_list: CutList
+    ) -> None:
+        """A valid positive fps must not return 400."""
+        with patch(
+            "snipsnap.web.app.load_cut_list",
+            return_value=sample_cut_list,
+        ):
+            resp = client.post(
+                "/api/export/550e8400-e29b-41d4-a716-446655440000",
+                json={"format": "edl", "fps": 30},
+            )
+        assert resp.status_code == 200
+
+    def test_fps_positive_float_returns_200(
+        self, sample_cut_list: CutList
+    ) -> None:
+        """A valid positive float fps must not return 400."""
+        with patch(
+            "snipsnap.web.app.load_cut_list",
+            return_value=sample_cut_list,
+        ):
+            resp = client.post(
+                "/api/export/550e8400-e29b-41d4-a716-446655440000",
+                json={"format": "edl", "fps": 29.97},
+            )
+        assert resp.status_code == 200
+
+    def test_fps_default_omitted_returns_200(
+        self, sample_cut_list: CutList
+    ) -> None:
+        """Omitting fps should use the default (24) and return 200."""
+        with patch(
+            "snipsnap.web.app.load_cut_list",
+            return_value=sample_cut_list,
+        ):
+            resp = client.post(
+                "/api/export/550e8400-e29b-41d4-a716-446655440000",
+                json={"format": "edl"},
+            )
+        assert resp.status_code == 200
+
+
+# ---------------------------------------------------------------------------
+# Timestamp formatting: carry-over boundary fix
+# (Python mirror of the JavaScript formatTimestamp function)
+# ---------------------------------------------------------------------------
+
+
+def _format_timestamp_py(secs: float | None) -> str:
+    """Python equivalent of the fixed JS formatTimestamp function.
+
+    Mirrors the logic in snipsnap/web/static/index.html exactly, including
+    the carry-over fix when rounded tenths equal 10.
+    """
+    import math
+
+    if secs is None or (isinstance(secs, float) and math.isnan(secs)):
+        return "0:00"
+    h = int(secs // 3600)
+    m = int((secs % 3600) // 60)
+    s = int(secs % 60)
+    ms = round((secs % 1) * 10)
+    # Handle carry-over when rounded tenths equals 10
+    if ms >= 10:
+        ms = 0
+        s += 1
+        if s >= 60:
+            s = 0
+            m += 1
+            if m >= 60:
+                m = 0
+                h += 1
+    mm = str(m).zfill(2)
+    ss = str(s).zfill(2)
+    if h > 0:
+        return f"{h}:{mm}:{ss}"
+    return f"{mm}:{ss}.{ms}"
+
+
+class TestFormatTimestampFunction:
+    """Tests for the formatTimestamp carry-over boundary fix.
+
+    The bug: Math.round((secs % 1) * 10) can return 10 when the fractional
+    part is >= 0.95 (e.g. 1.95 → ms = round(9.5) = 10). The fix normalises
+    by incrementing seconds (and propagating carry to minutes/hours).
+    """
+
+    def test_normal_timestamp_no_carry(self) -> None:
+        """Normal timestamp with no carry-over should format correctly."""
+        assert _format_timestamp_py(65.3) == "01:05.3"
+
+    def test_zero_returns_expected(self) -> None:
+        """Zero seconds should format to 00:00.0."""
+        assert _format_timestamp_py(0.0) == "00:00.0"
+
+    def test_fractional_below_boundary(self) -> None:
+        """Fractional part of 0.94 rounds to 9 — no carry needed."""
+        assert _format_timestamp_py(1.94) == "00:01.9"
+
+    def test_carry_at_boundary_increments_seconds(self) -> None:
+        """1.95 → ms rounds to 10 → carry: seconds increments to 2, ms becomes 0."""
+        assert _format_timestamp_py(1.95) == "00:02.0"
+
+    def test_carry_resets_ms_to_zero(self) -> None:
+        """After carry, ms must be 0, not 10."""
+        result = _format_timestamp_py(0.95)
+        assert result == "00:01.0"
+        assert ".10" not in result
+
+    def test_carry_at_59_seconds_increments_minutes(self) -> None:
+        """59.95 → ms rounds to 10 → s becomes 60 → carry to minutes."""
+        assert _format_timestamp_py(59.95) == "01:00.0"
+
+    def test_carry_at_second_boundary_increments_minute(self) -> None:
+        """119.95 → ms rounds to 10 → s=60 → m increments from 1 to 2.
+
+        Note: 3599.95 % 1 gives 0.9499... (float precision), rounding to 9 not 10,
+        so the hours carry cannot be reliably triggered with natural decimal literals.
+        119.95 % 1 gives 0.9500... which rounds to 10 and tests the s→m carry chain.
+        """
+        assert _format_timestamp_py(119.95) == "02:00.0"
+
+    def test_carry_mid_minute(self) -> None:
+        """61.95 → ms=10 → s becomes 2 (from 1), ms becomes 0, no further carry."""
+        # 61.95: m=1, s=1, frac≈0.9500 → ms=10 → s increments to 2
+        assert _format_timestamp_py(61.95) == "01:02.0"
+
+    def test_hours_displayed_when_gte_3600(self) -> None:
+        """Values >= 3600s should display hours:mm:ss (no tenths)."""
+        assert _format_timestamp_py(3661.0) == "1:01:01"
+
+    def test_none_returns_fallback(self) -> None:
+        """None input returns the fallback '0:00'."""
+        assert _format_timestamp_py(None) == "0:00"

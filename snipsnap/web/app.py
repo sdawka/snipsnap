@@ -22,8 +22,9 @@ from pathlib import Path
 from typing import List, Optional
 
 import openai
-from fastapi import FastAPI, HTTPException
-from fastapi.responses import FileResponse, Response
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import FileResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
@@ -62,6 +63,34 @@ app = FastAPI(title="SnipSnap", version="0.1.0")
 _STATIC_DIR = Path(__file__).parent / "static"
 _STATIC_DIR.mkdir(exist_ok=True)
 app.mount("/static", StaticFiles(directory=str(_STATIC_DIR)), name="static")
+
+
+# ---------------------------------------------------------------------------
+# Exception handlers
+# ---------------------------------------------------------------------------
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(
+    request: Request, exc: RequestValidationError
+) -> JSONResponse:
+    """Return HTTP 400 instead of the default 422 for request validation errors.
+
+    FastAPI raises RequestValidationError for missing or invalid request fields.
+    This handler normalizes those to HTTP 400 Bad Request so clients receive a
+    consistent error status for all bad-input scenarios.
+
+    Args:
+        request: The incoming HTTP request.
+        exc: The validation error raised by FastAPI/Pydantic.
+
+    Returns:
+        A JSON response with status 400 and the validation error details.
+    """
+    return JSONResponse(
+        status_code=400,
+        content={"detail": exc.errors()},
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -556,6 +585,12 @@ def export_cut_list(cutlist_id: str, request: ExportRequest) -> Response:
         )
 
     fps = request.fps if request.fps is not None else 24.0
+
+    if fps <= 0:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid fps value: {fps!r}. fps must be a positive number greater than 0.",
+        )
 
     try:
         if fmt == "edl":
