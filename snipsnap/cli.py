@@ -18,7 +18,19 @@ import click
 
 from snipsnap import __version__
 from snipsnap.config import get_config
-from snipsnap.storage import save_transcription, transcription_exists
+from snipsnap.curation.engine import (
+    AuthenticationError,
+    CurationEngine,
+    CurationError,
+    MissingApiKeyError,
+)
+from snipsnap.storage import (
+    load_all_transcriptions,
+    save_cut_list,  # noqa: F401 – imported for test patching
+    save_transcription,
+    transcription_exists,
+)
+from snipsnap.transcription.base import SUPPORTED_EXTENSIONS
 from snipsnap.transcription.whisper_local import WhisperLocalProvider
 
 # ---------------------------------------------------------------------------
@@ -84,22 +96,25 @@ def transcribe(folder: str, model: Optional[str], force: bool) -> None:
     whisper_model = model or config.whisper_model
 
     # ------------------------------------------------------------------
-    # Load transcription provider
+    # Discover videos (before loading the model to fail fast on empty folders)
+    # ------------------------------------------------------------------
+    videos: list[Path] = []
+    for ext in SUPPORTED_EXTENSIONS:
+        videos.extend(folder_path.rglob(f"*{ext}"))
+    videos.sort()
+
+    if not videos:
+        click.echo(f"No video files found in: {folder}", err=True)
+        sys.exit(1)
+
+    # ------------------------------------------------------------------
+    # Load transcription provider (only after confirming there are videos)
     # ------------------------------------------------------------------
     click.echo(f"Loading Whisper model '{whisper_model}'…")
     try:
         provider = WhisperLocalProvider(model_size=whisper_model)
     except Exception as exc:  # noqa: BLE001
         click.echo(f"Error: Failed to load Whisper model '{whisper_model}': {exc}", err=True)
-        sys.exit(1)
-
-    # ------------------------------------------------------------------
-    # Discover videos
-    # ------------------------------------------------------------------
-    videos = provider.discover_videos(folder_path)
-
-    if not videos:
-        click.echo(f"No video files found in: {folder}", err=True)
         sys.exit(1)
 
     total = len(videos)
@@ -146,3 +161,135 @@ def transcribe(folder: str, model: Optional[str], force: bool) -> None:
     # Exit with non-zero if every file failed (nothing was processed).
     if failed > 0 and completed == 0 and skipped == 0:
         sys.exit(1)
+
+
+# ---------------------------------------------------------------------------
+# curate
+# ---------------------------------------------------------------------------
+
+
+@main.command()
+@click.option(
+    "--prompt",
+    required=True,
+    metavar="PROMPT",
+    help="Natural-language curation prompt (e.g. 'find funny moments').",
+)
+@click.option(
+    "--model",
+    default=None,
+    metavar="LLM_MODEL",
+    help=(
+        "LLM model identifier to use (OpenRouter model string). "
+        "Defaults to SNIPSNAP_MODEL or 'google/gemini-2.5-flash-lite'."
+    ),
+)
+@click.option(
+    "--data-dir",
+    default=None,
+    metavar="DIR",
+    type=click.Path(),
+    help="Override the data directory (default: configured data directory).",
+)
+def curate(prompt: str, model: Optional[str], data_dir: Optional[str]) -> None:
+    """Curate transcriptions with an LLM prompt and produce a cut list.
+
+    Loads all existing transcriptions from storage, passes them to the
+    curation engine together with PROMPT, and writes a new cut list to disk.
+    Prints the cut list ID and a formatted summary of selected segments.
+
+    Run 'snipsnap transcribe <folder>' first if no transcriptions exist.
+    """
+    # ------------------------------------------------------------------
+    # Resolve data directory override
+    # ------------------------------------------------------------------
+    data_path: Optional[Path] = Path(data_dir) if data_dir else None
+
+    # ------------------------------------------------------------------
+    # Load transcriptions
+    # ------------------------------------------------------------------
+    transcriptions = load_all_transcriptions(data_path)
+
+    if not transcriptions:
+        click.echo(
+            "Error: No transcriptions found. "
+            "Run 'snipsnap transcribe <folder>' first to generate transcriptions.",
+            err=True,
+        )
+        sys.exit(1)
+
+    # ------------------------------------------------------------------
+    # Resolve configuration and API key
+    # ------------------------------------------------------------------
+    config = get_config()
+    api_key = config.openrouter_api_key
+
+    if not api_key or not api_key.strip():
+        click.echo(
+            "Error: OpenRouter API key is not configured. "
+            "Set the OPENROUTER_API_KEY environment variable or add it to your .env file.",
+            err=True,
+        )
+        sys.exit(1)
+
+    # ------------------------------------------------------------------
+    # Resolve LLM model
+    # ------------------------------------------------------------------
+    llm_model = model or config.model
+
+    # ------------------------------------------------------------------
+    # Build OpenAI client (pointing at OpenRouter)
+    # ------------------------------------------------------------------
+    import openai  # local import – keeps module-level imports lightweight
+
+    client = openai.OpenAI(
+        api_key=api_key,
+        base_url="https://openrouter.ai/api/v1",
+    )
+
+    # ------------------------------------------------------------------
+    # Run curation engine
+    # ------------------------------------------------------------------
+    engine = CurationEngine(client=client, api_key=api_key)
+
+    click.echo(
+        f"Curating {len(transcriptions)} transcription(s) with prompt: {prompt!r}"
+    )
+    click.echo(f"Using model: {llm_model}")
+    click.echo()
+
+    try:
+        cut_list = engine.curate(
+            transcriptions=transcriptions,
+            prompt=prompt,
+            model=llm_model,
+            data_dir=data_path,
+        )
+    except MissingApiKeyError as exc:
+        click.echo(f"Error: {exc}", err=True)
+        sys.exit(1)
+    except AuthenticationError as exc:
+        click.echo(f"Error: {exc}", err=True)
+        sys.exit(1)
+    except CurationError as exc:
+        click.echo(f"Error: Curation failed: {exc}", err=True)
+        sys.exit(1)
+
+    # ------------------------------------------------------------------
+    # Print results
+    # ------------------------------------------------------------------
+    click.echo(f"Cut list ID: {cut_list.id}")
+    click.echo(f"Segments:    {len(cut_list.segments)}")
+    click.echo(f"Duration:    {cut_list.total_duration:.1f}s")
+    click.echo()
+
+    if cut_list.segments:
+        click.echo("Segments:")
+        for seg in sorted(cut_list.segments, key=lambda s: s.order):
+            source_name = Path(seg.source_file).name
+            click.echo(
+                f"  [{seg.order + 1}] {source_name}  "
+                f"{seg.start:.1f}s–{seg.end:.1f}s  {seg.description}"
+            )
+    else:
+        click.echo("No segments matched the prompt.")

@@ -7,6 +7,7 @@ lightweight stub that returns deterministic transcriptions.
 
 from __future__ import annotations
 
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import List, Optional
 from unittest.mock import MagicMock, patch
@@ -15,7 +16,11 @@ import pytest
 from click.testing import CliRunner
 
 from snipsnap.cli import main
-from snipsnap.models import Segment, Transcription
+from snipsnap.curation.engine import (
+    AuthenticationError,
+    MissingApiKeyError,
+)
+from snipsnap.models import CutList, CutSegment, Segment, Transcription
 from snipsnap.transcription.base import TranscriptionProvider
 
 # ---------------------------------------------------------------------------
@@ -589,3 +594,513 @@ class TestTranscribeNoSpeech:
         assert result.exit_code == 0
         assert len(saved) == 1
         assert saved[0].segments == []  # type: ignore[attr-defined]
+
+
+# ===========================================================================
+# curate command — helpers and fixtures
+# ===========================================================================
+
+# Sample data for curate tests
+_SAMPLE_TRANSCRIPTION = Transcription(
+    source_file="/videos/clip_a.mp4",
+    duration=10.0,
+    language="en",
+    model_used="stub",
+    segments=[
+        Segment(start=0.0, end=3.0, text="This is really funny"),
+        Segment(start=5.0, end=8.0, text="Another funny moment"),
+    ],
+)
+
+_SAMPLE_CUT_LIST = CutList(
+    id="test-uuid-1234",
+    prompt="find funny moments",
+    theme="Funny Moments",
+    created_at=datetime(2024, 1, 1, tzinfo=timezone.utc),
+    total_duration=6.0,
+    segments=[
+        CutSegment(
+            source_file="/videos/clip_a.mp4",
+            start=0.0,
+            end=3.0,
+            description="Hilarious opening moment",
+            order=0,
+        ),
+        CutSegment(
+            source_file="/videos/clip_a.mp4",
+            start=5.0,
+            end=8.0,
+            description="Second funny bit",
+            order=1,
+        ),
+    ],
+)
+
+
+def _make_mock_engine(cut_list: CutList = _SAMPLE_CUT_LIST) -> MagicMock:
+    """Build a MagicMock CurationEngine that returns the given cut_list."""
+    mock = MagicMock()
+    mock.curate.return_value = cut_list
+    return mock
+
+
+# ===========================================================================
+# curate — help text
+# ===========================================================================
+
+
+class TestCurateHelp:
+    def test_help_exits_zero(self, runner: CliRunner) -> None:
+        result = runner.invoke(main, ["curate", "--help"])
+        assert result.exit_code == 0
+
+    def test_help_shows_prompt_flag(self, runner: CliRunner) -> None:
+        result = runner.invoke(main, ["curate", "--help"])
+        assert "--prompt" in result.output
+
+    def test_help_shows_model_flag(self, runner: CliRunner) -> None:
+        result = runner.invoke(main, ["curate", "--help"])
+        assert "--model" in result.output
+
+    def test_help_shows_data_dir_flag(self, runner: CliRunner) -> None:
+        result = runner.invoke(main, ["curate", "--help"])
+        assert "--data-dir" in result.output
+
+
+# ===========================================================================
+# curate — missing --prompt requirement
+# ===========================================================================
+
+
+class TestCurateMissingPrompt:
+    def test_missing_prompt_exits_nonzero(self, runner: CliRunner) -> None:
+        result = runner.invoke(main, ["curate"])
+        assert result.exit_code != 0
+
+    def test_missing_prompt_shows_usage(self, runner: CliRunner) -> None:
+        result = runner.invoke(main, ["curate"])
+        combined = (result.output or "") + (result.stderr or "")
+        assert "prompt" in combined.lower() or "missing" in combined.lower()
+
+
+# ===========================================================================
+# curate — error: no transcriptions
+# ===========================================================================
+
+
+class TestCurateNoTranscriptions:
+    def test_no_transcriptions_exits_nonzero(self, runner: CliRunner) -> None:
+        with patch("snipsnap.cli.load_all_transcriptions", return_value=[]):
+            result = runner.invoke(main, ["curate", "--prompt", "find funny moments"])
+        assert result.exit_code != 0
+
+    def test_no_transcriptions_shows_clear_message(self, runner: CliRunner) -> None:
+        with patch("snipsnap.cli.load_all_transcriptions", return_value=[]):
+            result = runner.invoke(main, ["curate", "--prompt", "find funny moments"])
+        combined = (result.output or "") + (result.stderr or "")
+        # Should suggest running snipsnap transcribe first
+        assert "transcri" in combined.lower()
+
+    def test_no_transcriptions_no_cut_list_created(
+        self, runner: CliRunner, tmp_path: Path
+    ) -> None:
+        with patch("snipsnap.cli.load_all_transcriptions", return_value=[]), patch(
+            "snipsnap.cli.save_cut_list"
+        ) as mock_save:
+            runner.invoke(main, ["curate", "--prompt", "find funny moments"])
+        mock_save.assert_not_called()
+
+
+# ===========================================================================
+# curate — error: missing API key
+# ===========================================================================
+
+
+class TestCurateMissingApiKey:
+    def test_missing_api_key_exits_nonzero(self, runner: CliRunner) -> None:
+        with patch(
+            "snipsnap.cli.load_all_transcriptions",
+            return_value=[_SAMPLE_TRANSCRIPTION],
+        ), patch("snipsnap.cli.get_config") as mock_cfg:
+            cfg = MagicMock()
+            cfg.openrouter_api_key = ""
+            cfg.model = "google/gemini-2.5-flash-lite"
+            cfg.data_dir = Path("/tmp/test_data")
+            mock_cfg.return_value = cfg
+            result = runner.invoke(main, ["curate", "--prompt", "find funny moments"])
+        assert result.exit_code != 0
+
+    def test_missing_api_key_shows_clear_message(self, runner: CliRunner) -> None:
+        with patch(
+            "snipsnap.cli.load_all_transcriptions",
+            return_value=[_SAMPLE_TRANSCRIPTION],
+        ), patch("snipsnap.cli.get_config") as mock_cfg:
+            cfg = MagicMock()
+            cfg.openrouter_api_key = ""
+            cfg.model = "google/gemini-2.5-flash-lite"
+            cfg.data_dir = Path("/tmp/test_data")
+            mock_cfg.return_value = cfg
+            result = runner.invoke(main, ["curate", "--prompt", "find funny moments"])
+        combined = (result.output or "") + (result.stderr or "")
+        # Should mention API key
+        assert "api" in combined.lower() or "key" in combined.lower()
+
+    def test_engine_missing_api_key_error_exits_nonzero(
+        self, runner: CliRunner
+    ) -> None:
+        """MissingApiKeyError from engine translates to non-zero exit."""
+        with patch(
+            "snipsnap.cli.load_all_transcriptions",
+            return_value=[_SAMPLE_TRANSCRIPTION],
+        ), patch("snipsnap.cli.CurationEngine") as mock_cls:
+            mock_engine = MagicMock()
+            mock_engine.curate.side_effect = MissingApiKeyError("No API key configured")
+            mock_cls.return_value = mock_engine
+            result = runner.invoke(main, ["curate", "--prompt", "find funny moments"])
+        assert result.exit_code != 0
+
+
+# ===========================================================================
+# curate — error: invalid API key (authentication error)
+# ===========================================================================
+
+
+class TestCurateInvalidApiKey:
+    def test_auth_error_exits_nonzero(self, runner: CliRunner) -> None:
+        with patch(
+            "snipsnap.cli.load_all_transcriptions",
+            return_value=[_SAMPLE_TRANSCRIPTION],
+        ), patch("snipsnap.cli.CurationEngine") as mock_cls:
+            mock_engine = MagicMock()
+            mock_engine.curate.side_effect = AuthenticationError(
+                "Authentication failed: the API key is invalid"
+            )
+            mock_cls.return_value = mock_engine
+            result = runner.invoke(main, ["curate", "--prompt", "find funny moments"])
+        assert result.exit_code != 0
+
+    def test_auth_error_message_does_not_expose_key(self, runner: CliRunner) -> None:
+        """The error message must never expose the actual API key value."""
+        fake_key = "sk-or-v1-supersecret-key-value"
+        with patch(
+            "snipsnap.cli.load_all_transcriptions",
+            return_value=[_SAMPLE_TRANSCRIPTION],
+        ), patch("snipsnap.cli.CurationEngine") as mock_cls, patch(
+            "snipsnap.cli.get_config"
+        ) as mock_cfg:
+            cfg = MagicMock()
+            cfg.openrouter_api_key = fake_key
+            cfg.model = "google/gemini-2.5-flash-lite"
+            cfg.data_dir = Path("/tmp/test_data")
+            mock_cfg.return_value = cfg
+            mock_engine = MagicMock()
+            mock_engine.curate.side_effect = AuthenticationError(
+                "Authentication failed: the API key is invalid"
+            )
+            mock_cls.return_value = mock_engine
+            result = runner.invoke(main, ["curate", "--prompt", "find funny moments"])
+        combined = (result.output or "") + (result.stderr or "")
+        assert fake_key not in combined
+
+    def test_auth_error_shows_authentication_message(self, runner: CliRunner) -> None:
+        with patch(
+            "snipsnap.cli.load_all_transcriptions",
+            return_value=[_SAMPLE_TRANSCRIPTION],
+        ), patch("snipsnap.cli.CurationEngine") as mock_cls:
+            mock_engine = MagicMock()
+            mock_engine.curate.side_effect = AuthenticationError(
+                "Authentication failed: the API key is invalid"
+            )
+            mock_cls.return_value = mock_engine
+            result = runner.invoke(main, ["curate", "--prompt", "find funny moments"])
+        combined = (result.output or "") + (result.stderr or "")
+        assert "auth" in combined.lower() or "invalid" in combined.lower() or "key" in combined.lower()
+
+
+# ===========================================================================
+# curate — happy path
+# ===========================================================================
+
+
+class TestCurateHappyPath:
+    def test_exits_zero_on_success(self, runner: CliRunner) -> None:
+        with patch(
+            "snipsnap.cli.load_all_transcriptions",
+            return_value=[_SAMPLE_TRANSCRIPTION],
+        ), patch("snipsnap.cli.CurationEngine") as mock_cls:
+            mock_cls.return_value = _make_mock_engine()
+            result = runner.invoke(main, ["curate", "--prompt", "find funny moments"])
+        assert result.exit_code == 0
+
+    def test_prints_cut_list_id(self, runner: CliRunner) -> None:
+        with patch(
+            "snipsnap.cli.load_all_transcriptions",
+            return_value=[_SAMPLE_TRANSCRIPTION],
+        ), patch("snipsnap.cli.CurationEngine") as mock_cls:
+            mock_cls.return_value = _make_mock_engine()
+            result = runner.invoke(main, ["curate", "--prompt", "find funny moments"])
+        assert _SAMPLE_CUT_LIST.id in result.output
+
+    def test_prints_segment_count(self, runner: CliRunner) -> None:
+        with patch(
+            "snipsnap.cli.load_all_transcriptions",
+            return_value=[_SAMPLE_TRANSCRIPTION],
+        ), patch("snipsnap.cli.CurationEngine") as mock_cls:
+            mock_cls.return_value = _make_mock_engine()
+            result = runner.invoke(main, ["curate", "--prompt", "find funny moments"])
+        # Should print "2" segments somewhere
+        assert "2" in result.output
+
+    def test_prints_total_duration(self, runner: CliRunner) -> None:
+        with patch(
+            "snipsnap.cli.load_all_transcriptions",
+            return_value=[_SAMPLE_TRANSCRIPTION],
+        ), patch("snipsnap.cli.CurationEngine") as mock_cls:
+            mock_cls.return_value = _make_mock_engine()
+            result = runner.invoke(main, ["curate", "--prompt", "find funny moments"])
+        assert "6" in result.output  # total_duration = 6.0
+
+    def test_prints_segment_source_file(self, runner: CliRunner) -> None:
+        with patch(
+            "snipsnap.cli.load_all_transcriptions",
+            return_value=[_SAMPLE_TRANSCRIPTION],
+        ), patch("snipsnap.cli.CurationEngine") as mock_cls:
+            mock_cls.return_value = _make_mock_engine()
+            result = runner.invoke(main, ["curate", "--prompt", "find funny moments"])
+        # Source filename should appear in output
+        assert "clip_a.mp4" in result.output
+
+    def test_prints_segment_timestamps(self, runner: CliRunner) -> None:
+        with patch(
+            "snipsnap.cli.load_all_transcriptions",
+            return_value=[_SAMPLE_TRANSCRIPTION],
+        ), patch("snipsnap.cli.CurationEngine") as mock_cls:
+            mock_cls.return_value = _make_mock_engine()
+            result = runner.invoke(main, ["curate", "--prompt", "find funny moments"])
+        # Timestamps 0.0 and 3.0 or 5.0 and 8.0 should appear
+        assert "0.0" in result.output or "0:00" in result.output
+
+    def test_prints_segment_description(self, runner: CliRunner) -> None:
+        with patch(
+            "snipsnap.cli.load_all_transcriptions",
+            return_value=[_SAMPLE_TRANSCRIPTION],
+        ), patch("snipsnap.cli.CurationEngine") as mock_cls:
+            mock_cls.return_value = _make_mock_engine()
+            result = runner.invoke(main, ["curate", "--prompt", "find funny moments"])
+        assert "Hilarious" in result.output or "funny" in result.output.lower()
+
+    def test_calls_curate_with_correct_prompt(self, runner: CliRunner) -> None:
+        mock_engine = _make_mock_engine()
+        with patch(
+            "snipsnap.cli.load_all_transcriptions",
+            return_value=[_SAMPLE_TRANSCRIPTION],
+        ), patch("snipsnap.cli.CurationEngine") as mock_cls:
+            mock_cls.return_value = mock_engine
+            runner.invoke(main, ["curate", "--prompt", "find funny moments"])
+        mock_engine.curate.assert_called_once()
+        call_kwargs = mock_engine.curate.call_args
+        # prompt must be passed
+        assert "find funny moments" in str(call_kwargs)
+
+
+# ===========================================================================
+# curate — empty cut list (prompt matches nothing)
+# ===========================================================================
+
+
+class TestCurateEmptyResult:
+    def test_empty_segments_exits_zero(self, runner: CliRunner) -> None:
+        empty_cut_list = CutList(
+            id="empty-uuid",
+            prompt="find nothing",
+            theme="Nothing Found",
+            created_at=datetime(2024, 1, 1, tzinfo=timezone.utc),
+            total_duration=0.0,
+            segments=[],
+        )
+        with patch(
+            "snipsnap.cli.load_all_transcriptions",
+            return_value=[_SAMPLE_TRANSCRIPTION],
+        ), patch("snipsnap.cli.CurationEngine") as mock_cls:
+            mock_cls.return_value = _make_mock_engine(empty_cut_list)
+            result = runner.invoke(main, ["curate", "--prompt", "find nothing"])
+        assert result.exit_code == 0
+
+    def test_empty_segments_shows_zero_count(self, runner: CliRunner) -> None:
+        empty_cut_list = CutList(
+            id="empty-uuid",
+            prompt="find nothing",
+            theme="Nothing Found",
+            created_at=datetime(2024, 1, 1, tzinfo=timezone.utc),
+            total_duration=0.0,
+            segments=[],
+        )
+        with patch(
+            "snipsnap.cli.load_all_transcriptions",
+            return_value=[_SAMPLE_TRANSCRIPTION],
+        ), patch("snipsnap.cli.CurationEngine") as mock_cls:
+            mock_cls.return_value = _make_mock_engine(empty_cut_list)
+            result = runner.invoke(main, ["curate", "--prompt", "find nothing"])
+        assert "0" in result.output
+
+
+# ===========================================================================
+# curate — --model flag
+# ===========================================================================
+
+
+class TestCurateModelFlag:
+    def test_model_flag_passed_to_engine(self, runner: CliRunner) -> None:
+        mock_engine = _make_mock_engine()
+        with patch(
+            "snipsnap.cli.load_all_transcriptions",
+            return_value=[_SAMPLE_TRANSCRIPTION],
+        ), patch("snipsnap.cli.CurationEngine") as mock_cls:
+            mock_cls.return_value = mock_engine
+            runner.invoke(
+                main,
+                ["curate", "--prompt", "find funny", "--model", "openai/gpt-4o"],
+            )
+        call_kwargs = mock_engine.curate.call_args
+        assert "openai/gpt-4o" in str(call_kwargs)
+
+    def test_default_model_is_gemini_flash_lite(self, runner: CliRunner) -> None:
+        mock_engine = _make_mock_engine()
+        with patch(
+            "snipsnap.cli.load_all_transcriptions",
+            return_value=[_SAMPLE_TRANSCRIPTION],
+        ), patch("snipsnap.cli.CurationEngine") as mock_cls, patch(
+            "snipsnap.cli.get_config"
+        ) as mock_cfg:
+            cfg = MagicMock()
+            cfg.openrouter_api_key = "test-key"
+            cfg.model = "google/gemini-2.5-flash-lite"
+            cfg.data_dir = Path("/tmp/test_data")
+            mock_cfg.return_value = cfg
+            mock_cls.return_value = mock_engine
+            runner.invoke(main, ["curate", "--prompt", "find funny"])
+        call_kwargs = mock_engine.curate.call_args
+        assert "google/gemini-2.5-flash-lite" in str(call_kwargs)
+
+
+# ===========================================================================
+# curate — multiple curations produce distinct cut lists
+# ===========================================================================
+
+
+class TestCurateMultipleCurations:
+    def test_multiple_curations_produce_distinct_ids(self, runner: CliRunner) -> None:
+        cut_list_a = CutList(
+            id="uuid-aaaa",
+            prompt="find funny moments",
+            theme="Funny",
+            created_at=datetime(2024, 1, 1, tzinfo=timezone.utc),
+            total_duration=3.0,
+            segments=[
+                CutSegment(
+                    source_file="/videos/clip_a.mp4",
+                    start=0.0,
+                    end=3.0,
+                    description="Funny bit",
+                    order=0,
+                )
+            ],
+        )
+        cut_list_b = CutList(
+            id="uuid-bbbb",
+            prompt="find dramatic moments",
+            theme="Drama",
+            created_at=datetime(2024, 1, 2, tzinfo=timezone.utc),
+            total_duration=3.0,
+            segments=[
+                CutSegment(
+                    source_file="/videos/clip_a.mp4",
+                    start=5.0,
+                    end=8.0,
+                    description="Dramatic bit",
+                    order=0,
+                )
+            ],
+        )
+
+        with patch(
+            "snipsnap.cli.load_all_transcriptions",
+            return_value=[_SAMPLE_TRANSCRIPTION],
+        ), patch("snipsnap.cli.CurationEngine") as mock_cls:
+            mock_cls.return_value = _make_mock_engine(cut_list_a)
+            result_a = runner.invoke(
+                main, ["curate", "--prompt", "find funny moments"]
+            )
+            mock_cls.return_value = _make_mock_engine(cut_list_b)
+            result_b = runner.invoke(
+                main, ["curate", "--prompt", "find dramatic moments"]
+            )
+
+        assert result_a.exit_code == 0
+        assert result_b.exit_code == 0
+        assert "uuid-aaaa" in result_a.output
+        assert "uuid-bbbb" in result_b.output
+        # The two IDs must be different
+        assert "uuid-aaaa" != "uuid-bbbb"
+
+
+# ===========================================================================
+# curate — --data-dir flag
+# ===========================================================================
+
+
+class TestCurateDataDirFlag:
+    def test_data_dir_flag_passed_to_load(self, runner: CliRunner, tmp_path: Path) -> None:
+        """--data-dir should override the default data directory."""
+        custom_dir = tmp_path / "custom_data"
+        custom_dir.mkdir()
+        mock_engine = _make_mock_engine()
+        with patch(
+            "snipsnap.cli.load_all_transcriptions"
+        ) as mock_load, patch("snipsnap.cli.CurationEngine") as mock_cls:
+            mock_load.return_value = [_SAMPLE_TRANSCRIPTION]
+            mock_cls.return_value = mock_engine
+            result = runner.invoke(
+                main,
+                [
+                    "curate",
+                    "--prompt",
+                    "find funny moments",
+                    "--data-dir",
+                    str(custom_dir),
+                ],
+            )
+        assert result.exit_code == 0
+        # load_all_transcriptions should have been called with the custom data dir
+        mock_load.assert_called_once()
+        call_args = mock_load.call_args
+        assert custom_dir in call_args[0] or custom_dir == call_args[1].get("data_dir")
+
+
+# ===========================================================================
+# transcribe — UX fix: model loaded AFTER video discovery
+# ===========================================================================
+
+
+class TestTranscribeModelLoadOrder:
+    def test_model_not_loaded_when_no_videos(
+        self, runner: CliRunner, empty_folder: Path
+    ) -> None:
+        """WhisperLocalProvider must NOT be instantiated when no videos are found."""
+        with patch("snipsnap.cli.WhisperLocalProvider") as mock_cls:
+            mock_cls.return_value = _StubProvider()
+            result = runner.invoke(main, ["transcribe", str(empty_folder)])
+        # Should exit with error (no videos found)
+        assert result.exit_code != 0
+        # But WhisperLocalProvider should NOT have been instantiated
+        mock_cls.assert_not_called()
+
+    def test_model_loaded_when_videos_exist(
+        self, runner: CliRunner, single_video_folder: Path
+    ) -> None:
+        """WhisperLocalProvider MUST be instantiated when videos are found."""
+        with patch("snipsnap.cli.WhisperLocalProvider") as mock_cls:
+            mock_cls.return_value = _StubProvider()
+            result = runner.invoke(main, ["transcribe", str(single_video_folder)])
+        assert result.exit_code == 0
+        mock_cls.assert_called_once()
