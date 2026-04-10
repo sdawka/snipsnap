@@ -35,6 +35,9 @@ include = ["snipsnap*"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-v"
+markers = [
+    "integration: marks tests as integration tests requiring model downloads (deselect with '-m not integration')",
+]
 
 [tool.mypy]
 python_version = "3.11"
