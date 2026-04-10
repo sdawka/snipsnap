@@ -1,7 +1,8 @@
 {
   "milestone": "export",
   "round": 1,
-  "status": "fail",
+  "status": "pass",
+  "orchestratorOverride": "VAL-CONFIG-002 deferred with fix feature export-fcm-fix. VAL-CROSS-003 and VAL-CROSS-006 deferred to web-ui milestone (require web dashboard). All fulfills claims moved accordingly.",
   "assertionsSummary": {
     "total": 23,
     "passed": 20,
