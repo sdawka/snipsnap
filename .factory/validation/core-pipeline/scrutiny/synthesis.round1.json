@@ -1,0 +1,86 @@
+{
+  "milestone": "core-pipeline",
+  "round": 1,
+  "status": "fail",
+  "validatorsRun": {
+    "test": {
+      "passed": true,
+      "command": "source /Users/sdawka/Code/snipsnap/.venv/bin/activate && python -m pytest /Users/sdawka/Code/snipsnap/tests/ -x -v --tb=short -n 4",
+      "exitCode": 0
+    },
+    "typecheck": {
+      "passed": true,
+      "command": "source /Users/sdawka/Code/snipsnap/.venv/bin/activate && python -m mypy /Users/sdawka/Code/snipsnap/snipsnap/ --ignore-missing-imports",
+      "exitCode": 0
+    },
+    "lint": {
+      "passed": true,
+      "command": "source /Users/sdawka/Code/snipsnap/.venv/bin/activate && python -m ruff check /Users/sdawka/Code/snipsnap/snipsnap/ /Users/sdawka/Code/snipsnap/tests/",
+      "exitCode": 0
+    }
+  },
+  "reviewsSummary": {
+    "total": 6,
+    "passed": 2,
+    "failed": 4,
+    "failedFeatures": [
+      "transcription-engine",
+      "curation-engine",
+      "cli-transcribe",
+      "cli-curate"
+    ]
+  },
+  "blockingIssues": [
+    {
+      "featureId": "curation-engine",
+      "severity": "blocking",
+      "description": "snipsnap/curation/engine.py accepts LLM-provided source_file/start/end values without validating source membership and timestamp bounds against input transcriptions before persisting cut lists."
+    },
+    {
+      "featureId": "cli-transcribe",
+      "severity": "blocking",
+      "description": "snipsnap/cli.py currently exits non-zero only when every file fails; mixed-success batches with one or more failed files still exit 0, violating the non-zero-on-errors contract."
+    },
+    {
+      "featureId": "cli-curate",
+      "severity": "blocking",
+      "description": "snipsnap/cli.py catches only mapped CurationError subclasses; non-mapped OpenAI SDK failures can bubble as raw exceptions/tracebacks instead of clear user-facing curation errors."
+    }
+  ],
+  "appliedUpdates": [],
+  "suggestedGuidanceUpdates": [
+    {
+      "target": "backend-worker skill",
+      "suggestion": "Clarify RED-first procedure for bootstrap/setup and CLI features, and require skillFeedback.followedProcedure=false when workers intentionally deviate from strict tests-first sequencing.",
+      "evidence": "Repeated across reviews for project-setup, transcription-engine, cli-transcribe, and cli-status-help where implementation edits preceded tests but handoffs still marked followedProcedure=true.",
+      "isSystemic": true
+    },
+    {
+      "target": "backend-worker skill",
+      "suggestion": "Either enforce explicit manual verification evidence for engine features or document an allowed N/A path when manual checks are impractical, to align procedure with observed execution.",
+      "evidence": "curation-engine review noted manual verification is required by skill text but handoff recorded only automated commands while reporting followedProcedure=true.",
+      "isSystemic": false
+    },
+    {
+      "target": "AGENTS.md or testing guidance",
+      "suggestion": "Add guidance to avoid patching imported-but-unused symbols in tests; mocks should target the actual call site to prevent vacuous assertions.",
+      "evidence": "cli-curate review found tests/test_cli.py patches snipsnap.cli.save_cut_list even though persistence is executed in snipsnap.curation.engine.save_cut_list.",
+      "isSystemic": false
+    }
+  ],
+  "rejectedObservations": [
+    {
+      "observation": "Exclude @pytest.mark.integration tests from default test command in .factory/services.yaml.",
+      "reason": "ambiguous: current suite is fast/deterministic in this repo state and no validator instability was observed from running the full configured test command."
+    },
+    {
+      "observation": "Document stem-based transcription storage collision behavior in shared library docs.",
+      "reason": "already-resolved: current storage implementation uses stem+hash keys, so this caveat is outdated."
+    },
+    {
+      "observation": "Strengthen AGENTS.md enforcement that CLI remains a thin interface over engines.",
+      "reason": "ambiguous/normative: observation is architectural preference without concrete failing behavior in current validators."
+    }
+  ],
+  "previousRound": null
+}

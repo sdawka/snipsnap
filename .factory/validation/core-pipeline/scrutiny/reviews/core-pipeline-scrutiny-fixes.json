@@ -1,0 +1,15 @@
+{
+  "featureId": "core-pipeline-scrutiny-fixes",
+  "reviewedAt": "2026-04-10T20:38:47Z",
+  "commitId": "7054e37",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "pass",
+  "codeReview": {
+    "summary": "Reviewed handoff, transcript skeleton, and commit 7054e37. The fix correctly addresses prior blocking failures: segment source/timestamp validation is now enforced in the curation engine, transcribe exits non-zero on any per-file failure, and curate now catches broader unmapped OpenAI SDK errors with user-facing messages. The previously reported transcription storage-key collision issue is also resolved in current code via path-hashed transcription keys. No new high-confidence blocking or non-blocking defects were identified in this fix.",
+    "issues": []
+  },
+  "sharedStateObservations": [],
+  "addressesFailureFrom": null,
+  "summary": "Pass. core-pipeline-scrutiny-fixes adequately resolves the prior blocking issues from curation-engine, cli-transcribe, and cli-curate, and current repository state confirms the earlier transcription-engine collision failure is fixed as well. No new high-confidence regressions were found."
+}
