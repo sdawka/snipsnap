@@ -30,6 +30,7 @@ None.
    - Edge cases mentioned in the feature's `expectedBehavior`
    - Error handling paths
    Run tests to confirm they fail: `source .venv/bin/activate && python -m pytest tests/ -x -v --tb=short`
+   NOTE: For CLI features or bootstrap/setup features where test interfaces don't exist yet, you may write tests alongside implementation. If you deviate from strict RED-first, report `followedProcedure: false` in your handoff and explain why.
 
 3. **Implement (GREEN)**: Write the implementation code to make tests pass. Follow these patterns:
    - Use type hints on all functions and class methods
