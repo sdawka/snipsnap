@@ -1104,3 +1104,312 @@ class TestTranscribeModelLoadOrder:
             result = runner.invoke(main, ["transcribe", str(single_video_folder)])
         assert result.exit_code == 0
         mock_cls.assert_called_once()
+
+
+# ===========================================================================
+# Root help — all subcommands listed
+# ===========================================================================
+
+
+class TestRootHelpAllSubcommands:
+    def test_root_help_lists_curate(self, runner: CliRunner) -> None:
+        result = runner.invoke(main, ["--help"])
+        assert result.exit_code == 0
+        assert "curate" in result.output
+
+    def test_root_help_lists_export(self, runner: CliRunner) -> None:
+        result = runner.invoke(main, ["--help"])
+        assert result.exit_code == 0
+        assert "export" in result.output
+
+    def test_root_help_lists_status(self, runner: CliRunner) -> None:
+        result = runner.invoke(main, ["--help"])
+        assert result.exit_code == 0
+        assert "status" in result.output
+
+    def test_root_help_lists_all_four_subcommands(self, runner: CliRunner) -> None:
+        result = runner.invoke(main, ["--help"])
+        assert result.exit_code == 0
+        assert "transcribe" in result.output
+        assert "curate" in result.output
+        assert "export" in result.output
+        assert "status" in result.output
+
+
+# ===========================================================================
+# export — help text
+# ===========================================================================
+
+
+class TestExportHelp:
+    def test_help_exits_zero(self, runner: CliRunner) -> None:
+        result = runner.invoke(main, ["export", "--help"])
+        assert result.exit_code == 0
+
+    def test_help_shows_format_flag(self, runner: CliRunner) -> None:
+        result = runner.invoke(main, ["export", "--help"])
+        assert "--format" in result.output
+
+    def test_help_shows_cut_list_id_argument(self, runner: CliRunner) -> None:
+        """CUT_LIST_ID must appear in the export help text as an argument."""
+        result = runner.invoke(main, ["export", "--help"])
+        assert "CUT_LIST_ID" in result.output or "cut_list_id" in result.output.lower()
+
+    def test_help_shows_valid_format_options(self, runner: CliRunner) -> None:
+        """Help must mention all valid output formats."""
+        result = runner.invoke(main, ["export", "--help"])
+        combined = result.output.lower()
+        assert "edl" in combined
+        assert "fcpxml" in combined
+        assert "davinci" in combined
+
+    def test_help_shows_output_flag(self, runner: CliRunner) -> None:
+        result = runner.invoke(main, ["export", "--help"])
+        assert "--output" in result.output
+
+    def test_help_shows_fps_flag(self, runner: CliRunner) -> None:
+        result = runner.invoke(main, ["export", "--help"])
+        assert "--fps" in result.output
+
+
+# ===========================================================================
+# export — error handling
+# ===========================================================================
+
+
+class TestExportErrors:
+    def test_missing_cut_list_exits_nonzero(self, runner: CliRunner) -> None:
+        """A non-existent cut list ID must produce a non-zero exit code."""
+        with patch("snipsnap.cli.load_cut_list", return_value=None):
+            result = runner.invoke(
+                main, ["export", "nonexistent-id", "--format", "edl"]
+            )
+        assert result.exit_code != 0
+
+    def test_missing_cut_list_shows_clear_error(self, runner: CliRunner) -> None:
+        """Error message must reference the cut list ID and guide the user."""
+        with patch("snipsnap.cli.load_cut_list", return_value=None):
+            result = runner.invoke(
+                main, ["export", "nonexistent-id", "--format", "edl"]
+            )
+        combined = (result.output or "") + (result.stderr or "")
+        assert "nonexistent-id" in combined or "not found" in combined.lower()
+
+    def test_missing_cut_list_suggests_status(self, runner: CliRunner) -> None:
+        """Error message should guide the user to 'snipsnap status'."""
+        with patch("snipsnap.cli.load_cut_list", return_value=None):
+            result = runner.invoke(
+                main, ["export", "missing-id", "--format", "edl"]
+            )
+        combined = (result.output or "") + (result.stderr or "")
+        assert "status" in combined.lower()
+
+    def test_missing_format_exits_nonzero(self, runner: CliRunner) -> None:
+        """Omitting --format must produce a non-zero exit code."""
+        result = runner.invoke(main, ["export", "some-cut-list-id"])
+        assert result.exit_code != 0
+
+    def test_invalid_format_exits_nonzero(self, runner: CliRunner) -> None:
+        """An unsupported --format value must exit non-zero."""
+        with patch("snipsnap.cli.load_cut_list", return_value=_SAMPLE_CUT_LIST):
+            result = runner.invoke(
+                main, ["export", "some-id", "--format", "mp4"]
+            )
+        assert result.exit_code != 0
+
+
+# ===========================================================================
+# status — help text
+# ===========================================================================
+
+
+class TestStatusHelp:
+    def test_help_exits_zero(self, runner: CliRunner) -> None:
+        result = runner.invoke(main, ["status", "--help"])
+        assert result.exit_code == 0
+
+    def test_help_shows_data_dir_flag(self, runner: CliRunner) -> None:
+        result = runner.invoke(main, ["status", "--help"])
+        assert "--data-dir" in result.output
+
+
+# ===========================================================================
+# status — empty state (no data)
+# ===========================================================================
+
+
+class TestStatusEmptyState:
+    def test_exits_zero_with_no_data(self, runner: CliRunner) -> None:
+        """status must exit 0 even when no transcriptions or cut lists exist."""
+        with patch("snipsnap.cli.load_all_transcriptions", return_value=[]), \
+             patch("snipsnap.cli.load_all_cut_lists", return_value=[]):
+            result = runner.invoke(main, ["status"])
+        assert result.exit_code == 0
+
+    def test_shows_zero_transcription_count_when_empty(self, runner: CliRunner) -> None:
+        with patch("snipsnap.cli.load_all_transcriptions", return_value=[]), \
+             patch("snipsnap.cli.load_all_cut_lists", return_value=[]):
+            result = runner.invoke(main, ["status"])
+        assert "Transcriptions: 0" in result.output or "0" in result.output
+
+    def test_shows_zero_cut_list_count_when_empty(self, runner: CliRunner) -> None:
+        with patch("snipsnap.cli.load_all_transcriptions", return_value=[]), \
+             patch("snipsnap.cli.load_all_cut_lists", return_value=[]):
+            result = runner.invoke(main, ["status"])
+        assert "Cut Lists: 0" in result.output or "0" in result.output
+
+    def test_shows_empty_state_message_for_transcriptions(
+        self, runner: CliRunner
+    ) -> None:
+        """When no transcriptions exist, an informative empty-state message is shown."""
+        with patch("snipsnap.cli.load_all_transcriptions", return_value=[]), \
+             patch("snipsnap.cli.load_all_cut_lists", return_value=[]):
+            result = runner.invoke(main, ["status"])
+        assert "none" in result.output.lower() or "0" in result.output
+
+    def test_shows_empty_state_message_for_cut_lists(
+        self, runner: CliRunner
+    ) -> None:
+        """When no cut lists exist, an informative empty-state message is shown."""
+        with patch("snipsnap.cli.load_all_transcriptions", return_value=[]), \
+             patch("snipsnap.cli.load_all_cut_lists", return_value=[]):
+            result = runner.invoke(main, ["status"])
+        assert "none" in result.output.lower() or "0" in result.output
+
+
+# ===========================================================================
+# status — with transcription data
+# ===========================================================================
+
+
+class TestStatusWithTranscriptions:
+    def test_shows_transcription_count(self, runner: CliRunner) -> None:
+        transcriptions = [_SAMPLE_TRANSCRIPTION]
+        with patch("snipsnap.cli.load_all_transcriptions", return_value=transcriptions), \
+             patch("snipsnap.cli.load_all_cut_lists", return_value=[]):
+            result = runner.invoke(main, ["status"])
+        assert result.exit_code == 0
+        assert "1" in result.output
+
+    def test_shows_transcription_filename(self, runner: CliRunner) -> None:
+        """The filename of each transcribed video must appear in the status output."""
+        transcriptions = [_SAMPLE_TRANSCRIPTION]
+        with patch("snipsnap.cli.load_all_transcriptions", return_value=transcriptions), \
+             patch("snipsnap.cli.load_all_cut_lists", return_value=[]):
+            result = runner.invoke(main, ["status"])
+        assert result.exit_code == 0
+        # _SAMPLE_TRANSCRIPTION.source_file = "/videos/clip_a.mp4"
+        assert "clip_a.mp4" in result.output
+
+    def test_shows_multiple_transcription_filenames(
+        self, runner: CliRunner
+    ) -> None:
+        """All transcription filenames must appear when multiple exist."""
+        transcription_b = Transcription(
+            source_file="/videos/clip_b.mkv",
+            duration=8.0,
+            language="en",
+            model_used="stub",
+            segments=[Segment(start=0.0, end=4.0, text="Some speech")],
+        )
+        transcriptions = [_SAMPLE_TRANSCRIPTION, transcription_b]
+        with patch("snipsnap.cli.load_all_transcriptions", return_value=transcriptions), \
+             patch("snipsnap.cli.load_all_cut_lists", return_value=[]):
+            result = runner.invoke(main, ["status"])
+        assert result.exit_code == 0
+        assert "clip_a.mp4" in result.output
+        assert "clip_b.mkv" in result.output
+
+    def test_shows_correct_transcription_count_for_multiple(
+        self, runner: CliRunner
+    ) -> None:
+        transcription_b = Transcription(
+            source_file="/videos/clip_b.mkv",
+            duration=8.0,
+            language="en",
+            model_used="stub",
+            segments=[],
+        )
+        transcriptions = [_SAMPLE_TRANSCRIPTION, transcription_b]
+        with patch("snipsnap.cli.load_all_transcriptions", return_value=transcriptions), \
+             patch("snipsnap.cli.load_all_cut_lists", return_value=[]):
+            result = runner.invoke(main, ["status"])
+        assert result.exit_code == 0
+        assert "2" in result.output
+
+
+# ===========================================================================
+# status — with cut list data
+# ===========================================================================
+
+
+class TestStatusWithCutLists:
+    def test_shows_cut_list_count(self, runner: CliRunner) -> None:
+        cut_lists = [_SAMPLE_CUT_LIST]
+        with patch("snipsnap.cli.load_all_transcriptions", return_value=[]), \
+             patch("snipsnap.cli.load_all_cut_lists", return_value=cut_lists):
+            result = runner.invoke(main, ["status"])
+        assert result.exit_code == 0
+        assert "1" in result.output
+
+    def test_shows_cut_list_id(self, runner: CliRunner) -> None:
+        """The cut list ID must appear in the status output for use by export."""
+        cut_lists = [_SAMPLE_CUT_LIST]
+        with patch("snipsnap.cli.load_all_transcriptions", return_value=[]), \
+             patch("snipsnap.cli.load_all_cut_lists", return_value=cut_lists):
+            result = runner.invoke(main, ["status"])
+        assert result.exit_code == 0
+        assert _SAMPLE_CUT_LIST.id in result.output
+
+    def test_shows_cut_list_creation_timestamp(self, runner: CliRunner) -> None:
+        """The creation date must appear so users can identify which cut list they want."""
+        cut_lists = [_SAMPLE_CUT_LIST]
+        with patch("snipsnap.cli.load_all_transcriptions", return_value=[]), \
+             patch("snipsnap.cli.load_all_cut_lists", return_value=cut_lists):
+            result = runner.invoke(main, ["status"])
+        assert result.exit_code == 0
+        # _SAMPLE_CUT_LIST.created_at = datetime(2024, 1, 1, ...)
+        assert "2024" in result.output
+
+    def test_shows_cut_list_prompt(self, runner: CliRunner) -> None:
+        """The prompt used to create the cut list must appear in the status output."""
+        cut_lists = [_SAMPLE_CUT_LIST]
+        with patch("snipsnap.cli.load_all_transcriptions", return_value=[]), \
+             patch("snipsnap.cli.load_all_cut_lists", return_value=cut_lists):
+            result = runner.invoke(main, ["status"])
+        assert result.exit_code == 0
+        # _SAMPLE_CUT_LIST.prompt = "find funny moments"
+        assert "find funny moments" in result.output
+
+    def test_shows_multiple_cut_list_ids(self, runner: CliRunner) -> None:
+        """All cut list IDs must appear when multiple cut lists exist."""
+        cut_list_b = CutList(
+            id="second-uuid-5678",
+            prompt="find dramatic moments",
+            theme="Drama",
+            created_at=datetime(2024, 2, 1, tzinfo=timezone.utc),
+            total_duration=4.0,
+            segments=[],
+        )
+        cut_lists = [_SAMPLE_CUT_LIST, cut_list_b]
+        with patch("snipsnap.cli.load_all_transcriptions", return_value=[]), \
+             patch("snipsnap.cli.load_all_cut_lists", return_value=cut_lists):
+            result = runner.invoke(main, ["status"])
+        assert result.exit_code == 0
+        assert _SAMPLE_CUT_LIST.id in result.output
+        assert cut_list_b.id in result.output
+
+    def test_cut_list_ids_are_usable_by_export(self, runner: CliRunner) -> None:
+        """The cut list IDs shown by status must match what load_cut_list returns."""
+        cut_lists = [_SAMPLE_CUT_LIST]
+        with patch("snipsnap.cli.load_all_transcriptions", return_value=[]), \
+             patch("snipsnap.cli.load_all_cut_lists", return_value=cut_lists):
+            status_result = runner.invoke(main, ["status"])
+        assert status_result.exit_code == 0
+        # The ID from status must be accepted by the export command (load_cut_list)
+        cut_list_id = _SAMPLE_CUT_LIST.id
+        assert cut_list_id in status_result.output
+        # Verify the same ID can be used with export (by checking load_cut_list is called)
+        with patch("snipsnap.cli.load_cut_list", return_value=_SAMPLE_CUT_LIST) as mock_load:
+            runner.invoke(main, ["export", cut_list_id, "--format", "edl"])
+        mock_load.assert_called_once_with(cut_list_id, None)

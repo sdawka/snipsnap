@@ -25,7 +25,9 @@ from snipsnap.curation.engine import (
     MissingApiKeyError,
 )
 from snipsnap.storage import (
+    load_all_cut_lists,
     load_all_transcriptions,
+    load_cut_list,
     save_cut_list,  # noqa: F401 – imported for test patching
     save_transcription,
     transcription_exists,
@@ -293,3 +295,163 @@ def curate(prompt: str, model: Optional[str], data_dir: Optional[str]) -> None:
             )
     else:
         click.echo("No segments matched the prompt.")
+
+
+# ---------------------------------------------------------------------------
+# status
+# ---------------------------------------------------------------------------
+
+
+@main.command()
+@click.option(
+    "--data-dir",
+    default=None,
+    metavar="DIR",
+    type=click.Path(),
+    help="Override the data directory (default: configured data directory).",
+)
+def status(data_dir: Optional[str]) -> None:
+    """Show the current pipeline state.
+
+    Displays the number of transcribed videos with their filenames, and all
+    available cut lists with their IDs, creation timestamps, and prompts.
+
+    Use cut list IDs shown here with 'snipsnap export <cut-list-id>'.
+    """
+    data_path: Optional[Path] = Path(data_dir) if data_dir else None
+
+    # ------------------------------------------------------------------
+    # Transcriptions
+    # ------------------------------------------------------------------
+    transcriptions = load_all_transcriptions(data_path)
+
+    click.echo(f"Transcriptions: {len(transcriptions)}")
+    if transcriptions:
+        for t in sorted(transcriptions, key=lambda x: Path(x.source_file).name):
+            click.echo(f"  {Path(t.source_file).name}")
+    else:
+        click.echo("  (none)")
+
+    click.echo()
+
+    # ------------------------------------------------------------------
+    # Cut lists
+    # ------------------------------------------------------------------
+    cut_lists = load_all_cut_lists(data_path)
+
+    click.echo(f"Cut Lists: {len(cut_lists)}")
+    if cut_lists:
+        for cl in sorted(cut_lists, key=lambda c: c.created_at):
+            ts = cl.created_at.strftime("%Y-%m-%d %H:%M:%S")
+            click.echo(f"  {cl.id}  [{ts}]  {cl.prompt!r}")
+    else:
+        click.echo("  (none)")
+
+
+# ---------------------------------------------------------------------------
+# export
+# ---------------------------------------------------------------------------
+
+
+@main.command()
+@click.argument("cut_list_id")
+@click.option(
+    "--format",
+    "output_format",
+    required=True,
+    type=click.Choice(["edl", "fcpxml", "davinci"], case_sensitive=False),
+    metavar="FORMAT",
+    help=(
+        "Output format: edl (CMX 3600 Edit Decision List), "
+        "fcpxml (Final Cut Pro XML 1.8), or davinci (DaVinci Resolve script)."
+    ),
+)
+@click.option(
+    "--output",
+    default=None,
+    metavar="FILE",
+    type=click.Path(),
+    help="Output file path (default: <cut-list-id>.<format-extension>).",
+)
+@click.option(
+    "--fps",
+    default=24.0,
+    metavar="FPS",
+    type=float,
+    show_default=True,
+    help="Frame rate for EDL timecodes.",
+)
+@click.option(
+    "--data-dir",
+    default=None,
+    metavar="DIR",
+    type=click.Path(),
+    help="Override the data directory (default: configured data directory).",
+)
+def export(
+    cut_list_id: str,
+    output_format: str,
+    output: Optional[str],
+    fps: float,
+    data_dir: Optional[str],
+) -> None:
+    """Export a cut list to an NLE-compatible format.
+
+    CUT_LIST_ID is the unique identifier of the cut list to export.
+    Use 'snipsnap status' to discover available cut list IDs.
+
+    \b
+    Supported formats:
+      edl     – CMX 3600 Edit Decision List
+      fcpxml  – Final Cut Pro XML (version 1.8)
+      davinci – DaVinci Resolve Python automation script
+    """
+    data_path: Optional[Path] = Path(data_dir) if data_dir else None
+
+    # ------------------------------------------------------------------
+    # Load the cut list
+    # ------------------------------------------------------------------
+    cut_list = load_cut_list(cut_list_id, data_path)
+
+    if cut_list is None:
+        click.echo(
+            f"Error: Cut list '{cut_list_id}' not found. "
+            "Use 'snipsnap status' to see available cut list IDs.",
+            err=True,
+        )
+        sys.exit(1)
+
+    # ------------------------------------------------------------------
+    # Determine output path
+    # ------------------------------------------------------------------
+    ext_map = {"edl": ".edl", "fcpxml": ".fcpxml", "davinci": ".py"}
+    ext = ext_map[output_format.lower()]
+    output_path = Path(output) if output else Path(f"{cut_list_id}{ext}")
+
+    # ------------------------------------------------------------------
+    # Generate export (lazy imports keep module startup fast)
+    # ------------------------------------------------------------------
+    click.echo(f"Exporting cut list '{cut_list_id}' as {output_format.upper()}…")
+
+    fmt = output_format.lower()
+    try:
+        if fmt == "edl":
+            from snipsnap.export.edl import EDLExporter  # type: ignore[import]
+
+            EDLExporter(fps=fps).export(cut_list, output_path)
+        elif fmt == "fcpxml":
+            from snipsnap.export.fcpxml import FCPXMLExporter  # type: ignore[import]
+
+            FCPXMLExporter().export(cut_list, output_path)
+        elif fmt == "davinci":
+            from snipsnap.export.davinci import DaVinciExporter  # type: ignore[import]
+
+            DaVinciExporter().export(cut_list, output_path)
+    except ImportError as exc:
+        click.echo(f"Error: Export module not available: {exc}", err=True)
+        sys.exit(1)
+    except Exception as exc:  # noqa: BLE001
+        click.echo(f"Error: Export failed: {exc}", err=True)
+        sys.exit(1)
+
+    click.echo(f"Exported to: {output_path}")
