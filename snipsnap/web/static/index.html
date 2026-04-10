@@ -1,0 +1,872 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SnipSnap – Video Curation Dashboard</title>
+
+  <!-- UnoCSS CDN runtime -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@unocss/reset/tailwind.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@unocss/runtime@0.61.6/uno.global.js"></script>
+
+  <!-- Alpine.js CDN -->
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.3/dist/cdn.min.js"></script>
+
+  <style>
+    /* Fallback styles in case UnoCSS CDN is slow */
+    [x-cloak] { display: none !important; }
+    body { font-family: system-ui, -apple-system, sans-serif; background: #f8fafc; color: #1e293b; margin: 0; }
+    .spinner {
+      display: inline-block;
+      width: 1.2em;
+      height: 1.2em;
+      border: 2px solid currentColor;
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .timeline-container { position: relative; height: 48px; background: #e2e8f0; border-radius: 8px; overflow: hidden; }
+    .timeline-block { position: absolute; top: 6px; height: 36px; border-radius: 4px; min-width: 4px; cursor: pointer; opacity: 0.85; transition: opacity 0.15s; }
+    .timeline-block:hover { opacity: 1; }
+  </style>
+</head>
+
+<body x-data="snipsnap()" x-init="init()" class="min-h-screen bg-slate-50">
+
+  <!-- ============================== HEADER ============================== -->
+  <header class="bg-white border-b border-slate-200 shadow-sm sticky top-0 z-50">
+    <div class="max-w-6xl mx-auto px-4">
+      <div class="flex items-center justify-between py-3">
+        <div class="flex items-center gap-3">
+          <span class="text-2xl">✂️</span>
+          <h1 class="text-xl font-bold text-slate-800">SnipSnap</h1>
+          <span class="text-sm text-slate-400">Video Curation Dashboard</span>
+        </div>
+      </div>
+
+      <!-- NAV TABS -->
+      <nav class="flex gap-1 -mb-px" role="tablist">
+        <template x-for="tab in tabs" :key="tab.id">
+          <button
+            role="tab"
+            :aria-selected="activeTab === tab.id"
+            :aria-controls="'panel-' + tab.id"
+            @click="switchTab(tab.id)"
+            :class="activeTab === tab.id
+              ? 'border-b-2 border-indigo-500 text-indigo-600 font-semibold bg-indigo-50'
+              : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'"
+            class="px-5 py-3 text-sm rounded-t-lg transition-colors cursor-pointer border-b-2 border-transparent"
+            x-text="tab.label"
+          ></button>
+        </template>
+      </nav>
+    </div>
+  </header>
+
+  <!-- ============================== MAIN ============================== -->
+  <main class="max-w-6xl mx-auto px-4 py-6">
+
+    <!-- ================================================================
+         SECTION 1 – TRANSCRIPTION BROWSER
+         ================================================================ -->
+    <section x-show="activeTab === 'transcriptions'" x-cloak role="tabpanel" id="panel-transcriptions" aria-label="Transcription Browser">
+
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-semibold text-slate-800">Transcription Browser</h2>
+        <button
+          @click="loadTranscriptions()"
+          :disabled="loadingTranscriptions"
+          class="flex items-center gap-2 px-3 py-1.5 text-sm bg-white border border-slate-300 rounded-lg hover:bg-slate-50 disabled:opacity-50 cursor-pointer"
+        >
+          <span x-show="loadingTranscriptions" class="spinner text-slate-500"></span>
+          <span>Refresh</span>
+        </button>
+      </div>
+
+      <!-- Error banner -->
+      <div x-show="transcriptionsError" class="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm" x-text="transcriptionsError"></div>
+
+      <!-- Loading state -->
+      <div x-show="loadingTranscriptions && transcriptions.length === 0" class="flex items-center gap-3 py-12 justify-center text-slate-500">
+        <span class="spinner"></span>
+        <span>Loading transcriptions…</span>
+      </div>
+
+      <!-- Empty state -->
+      <div x-show="!loadingTranscriptions && transcriptions.length === 0 && !transcriptionsError"
+           class="text-center py-16 bg-white rounded-xl border border-slate-200">
+        <div class="text-5xl mb-4">📂</div>
+        <p class="text-slate-600 font-medium text-lg mb-2">No transcriptions found</p>
+        <p class="text-slate-400 text-sm max-w-sm mx-auto">
+          Run <code class="bg-slate-100 px-1 rounded">snipsnap transcribe &lt;folder&gt;</code> to create
+          transcriptions from your video files, then refresh.
+        </p>
+      </div>
+
+      <!-- Two-column layout: list + detail -->
+      <div x-show="transcriptions.length > 0" class="grid grid-cols-1 md:grid-cols-5 gap-4">
+
+        <!-- Left: transcription list -->
+        <div class="md:col-span-2 space-y-2">
+          <template x-for="t in transcriptions" :key="t.source_file">
+            <button
+              @click="selectTranscription(t)"
+              :class="selectedTranscription && selectedTranscription.source_file === t.source_file
+                ? 'border-indigo-400 bg-indigo-50 ring-1 ring-indigo-400'
+                : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50'"
+              class="w-full text-left p-3 rounded-lg border transition-colors cursor-pointer"
+            >
+              <p class="font-medium text-sm text-slate-800 truncate" x-text="basename(t.source_file)"></p>
+              <div class="flex gap-3 mt-1 text-xs text-slate-500">
+                <span x-text="'⏱ ' + formatDuration(t.duration)"></span>
+                <span x-text="'📝 ' + t.segment_count + ' segments'"></span>
+              </div>
+            </button>
+          </template>
+        </div>
+
+        <!-- Right: transcription detail -->
+        <div class="md:col-span-3 bg-white rounded-xl border border-slate-200 min-h-64">
+
+          <!-- No selection state -->
+          <div x-show="!selectedTranscription" class="flex items-center justify-center h-64 text-slate-400 text-sm">
+            ← Select a video to view its segments
+          </div>
+
+          <!-- Loading segments -->
+          <div x-show="loadingSegments" class="flex items-center justify-center h-64 gap-3 text-slate-500">
+            <span class="spinner"></span>
+            <span>Loading segments…</span>
+          </div>
+
+          <!-- Detail view -->
+          <div x-show="selectedTranscription && !loadingSegments" class="p-4">
+            <div class="flex items-start justify-between mb-3">
+              <div>
+                <h3 class="font-semibold text-slate-800 text-sm" x-text="selectedTranscription ? basename(selectedTranscription.source_file) : ''"></h3>
+                <p class="text-xs text-slate-500 mt-0.5"
+                   x-text="selectedTranscription ? formatDuration(selectedTranscription.duration) + ' · ' + (selectedTranscription.segments ? selectedTranscription.segments.length : 0) + ' segments' : ''"></p>
+              </div>
+            </div>
+
+            <!-- Search box -->
+            <div class="mb-3">
+              <input
+                type="search"
+                x-model="segmentSearch"
+                placeholder="Search segments…"
+                class="w-full px-3 py-1.5 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                aria-label="Search segments by text"
+              />
+            </div>
+
+            <!-- Segments list -->
+            <div class="space-y-1.5 max-h-96 overflow-y-auto pr-1">
+              <template x-if="selectedTranscription && selectedTranscription.segments">
+                <template x-for="(seg, idx) in filteredSegments" :key="idx">
+                  <div class="flex gap-3 p-2.5 rounded-lg bg-slate-50 hover:bg-slate-100 text-sm">
+                    <div class="text-indigo-600 font-mono text-xs whitespace-nowrap pt-0.5">
+                      <span x-text="formatTimestamp(seg.start)"></span>
+                      <span class="text-slate-400">→</span>
+                      <span x-text="formatTimestamp(seg.end)"></span>
+                    </div>
+                    <p class="text-slate-700 leading-snug flex-1" x-text="seg.text"></p>
+                  </div>
+                </template>
+              </template>
+
+              <!-- No search results -->
+              <div x-show="selectedTranscription && selectedTranscription.segments && filteredSegments.length === 0 && segmentSearch"
+                   class="text-center py-6 text-slate-400 text-sm">
+                No segments match "<span x-text="segmentSearch"></span>"
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+
+    <!-- ================================================================
+         SECTION 2 – CURATION PROMPT
+         ================================================================ -->
+    <section x-show="activeTab === 'curate'" x-cloak role="tabpanel" id="panel-curate" aria-label="Curation Prompt">
+
+      <h2 class="text-lg font-semibold text-slate-800 mb-4">Curation Prompt</h2>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+        <!-- Form card -->
+        <div class="bg-white rounded-xl border border-slate-200 p-5">
+          <label class="block text-sm font-medium text-slate-700 mb-2" for="curation-prompt">
+            What should SnipSnap curate from your videos?
+          </label>
+          <textarea
+            id="curation-prompt"
+            x-model="curatePrompt"
+            :disabled="curating"
+            rows="5"
+            placeholder="e.g. Find the most insightful moments, key arguments, or funniest scenes…"
+            class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-indigo-300 disabled:bg-slate-50 disabled:text-slate-400"
+          ></textarea>
+
+          <!-- Error -->
+          <div x-show="curateError" class="mt-2 p-2 bg-red-50 border border-red-200 rounded text-red-700 text-xs" x-text="curateError"></div>
+
+          <div class="flex items-center justify-between mt-4">
+            <p class="text-xs text-slate-400">
+              Uses all available transcriptions as input.
+            </p>
+            <button
+              @click="runCuration()"
+              :disabled="curating || !curatePrompt.trim()"
+              class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
+              aria-label="Submit curation prompt"
+            >
+              <span x-show="curating" class="spinner"></span>
+              <span x-text="curating ? 'Curating…' : 'Curate'"></span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Result card -->
+        <div class="bg-white rounded-xl border border-slate-200 p-5">
+          <h3 class="text-sm font-semibold text-slate-700 mb-3">Last Result</h3>
+
+          <!-- Idle state -->
+          <div x-show="!curating && !lastCutList" class="py-8 text-center text-slate-400 text-sm">
+            Submit a prompt to generate a cut list.
+          </div>
+
+          <!-- Loading -->
+          <div x-show="curating" class="flex flex-col items-center justify-center py-10 gap-3 text-slate-500">
+            <span class="spinner" style="width:2rem;height:2rem;border-width:3px"></span>
+            <p class="text-sm">Analysing transcriptions with LLM…</p>
+            <p class="text-xs text-slate-400">This may take a minute.</p>
+          </div>
+
+          <!-- Result summary -->
+          <div x-show="lastCutList && !curating">
+            <div class="p-3 bg-green-50 border border-green-200 rounded-lg mb-3">
+              <p class="text-green-700 text-sm font-medium">✅ Cut list created!</p>
+            </div>
+            <div class="space-y-1.5 text-sm">
+              <div class="flex gap-2">
+                <span class="text-slate-500 w-24 shrink-0">Theme:</span>
+                <span class="text-slate-800 font-medium" x-text="lastCutList ? lastCutList.theme : ''"></span>
+              </div>
+              <div class="flex gap-2">
+                <span class="text-slate-500 w-24 shrink-0">Segments:</span>
+                <span class="text-slate-800" x-text="lastCutList ? lastCutList.segments.length : ''"></span>
+              </div>
+              <div class="flex gap-2">
+                <span class="text-slate-500 w-24 shrink-0">Duration:</span>
+                <span class="text-slate-800" x-text="lastCutList ? formatDuration(lastCutList.total_duration) : ''"></span>
+              </div>
+              <div class="flex gap-2">
+                <span class="text-slate-500 w-24 shrink-0">ID:</span>
+                <code class="text-xs text-slate-600 bg-slate-100 px-1 rounded" x-text="lastCutList ? lastCutList.id : ''"></code>
+              </div>
+            </div>
+            <div class="mt-4 flex gap-2">
+              <button
+                @click="switchTab('cutlists'); selectCutList(lastCutList)"
+                class="flex-1 px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors cursor-pointer"
+              >
+                View Cut List →
+              </button>
+              <button
+                @click="switchTab('export'); selectedCutListForExport = lastCutList"
+                class="flex-1 px-3 py-2 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors cursor-pointer"
+              >
+                Export →
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ================================================================
+         SECTION 3 – CUT LIST VIEWER
+         ================================================================ -->
+    <section x-show="activeTab === 'cutlists'" x-cloak role="tabpanel" id="panel-cutlists" aria-label="Cut List Viewer">
+
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-semibold text-slate-800">Cut List Viewer</h2>
+        <button
+          @click="loadCutLists()"
+          :disabled="loadingCutLists"
+          class="flex items-center gap-2 px-3 py-1.5 text-sm bg-white border border-slate-300 rounded-lg hover:bg-slate-50 disabled:opacity-50 cursor-pointer"
+        >
+          <span x-show="loadingCutLists" class="spinner text-slate-500"></span>
+          <span>Refresh</span>
+        </button>
+      </div>
+
+      <!-- Error -->
+      <div x-show="cutListsError" class="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm" x-text="cutListsError"></div>
+
+      <!-- Loading -->
+      <div x-show="loadingCutLists && cutLists.length === 0" class="flex items-center gap-3 py-12 justify-center text-slate-500">
+        <span class="spinner"></span>
+        <span>Loading cut lists…</span>
+      </div>
+
+      <!-- Empty state -->
+      <div x-show="!loadingCutLists && cutLists.length === 0 && !cutListsError"
+           class="text-center py-16 bg-white rounded-xl border border-slate-200">
+        <div class="text-5xl mb-4">🎬</div>
+        <p class="text-slate-600 font-medium text-lg mb-2">No cut list generated yet</p>
+        <p class="text-slate-400 text-sm max-w-sm mx-auto">
+          Go to the <strong>Curate</strong> tab, enter a prompt, and submit to generate your first cut list.
+        </p>
+      </div>
+
+      <!-- Content -->
+      <div x-show="cutLists.length > 0" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+
+        <!-- Left: cut list list -->
+        <div class="md:col-span-1 space-y-2">
+          <template x-for="cl in cutLists" :key="cl.id">
+            <button
+              @click="selectCutListById(cl.id)"
+              :class="selectedCutList && selectedCutList.id === cl.id
+                ? 'border-indigo-400 bg-indigo-50 ring-1 ring-indigo-400'
+                : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50'"
+              class="w-full text-left p-3 rounded-lg border transition-colors cursor-pointer"
+            >
+              <p class="text-xs font-medium text-slate-700 truncate" x-text="cl.theme || cl.prompt"></p>
+              <p class="text-xs text-slate-400 mt-0.5" x-text="formatDate(cl.created_at)"></p>
+              <div class="flex gap-2 mt-1 text-xs text-slate-500">
+                <span x-text="cl.segment_count + ' segs'"></span>
+                <span x-text="'⏱ ' + formatDuration(cl.total_duration)"></span>
+              </div>
+            </button>
+          </template>
+        </div>
+
+        <!-- Right: cut list detail -->
+        <div class="md:col-span-3 space-y-4">
+
+          <!-- No selection -->
+          <div x-show="!selectedCutList" class="bg-white rounded-xl border border-slate-200 flex items-center justify-center h-48 text-slate-400 text-sm">
+            ← Select a cut list to view its segments
+          </div>
+
+          <!-- Loading detail -->
+          <div x-show="loadingCutListDetail" class="bg-white rounded-xl border border-slate-200 flex items-center justify-center h-48 gap-3 text-slate-500">
+            <span class="spinner"></span>
+            <span>Loading segments…</span>
+          </div>
+
+          <!-- Detail -->
+          <div x-show="selectedCutList && !loadingCutListDetail" class="space-y-4">
+
+            <!-- Header -->
+            <div class="bg-white rounded-xl border border-slate-200 p-4">
+              <div class="flex items-start justify-between">
+                <div>
+                  <h3 class="font-semibold text-slate-800" x-text="selectedCutList ? selectedCutList.theme : ''"></h3>
+                  <p class="text-xs text-slate-500 mt-0.5" x-text="selectedCutList ? 'Prompt: ' + selectedCutList.prompt : ''"></p>
+                </div>
+                <button
+                  @click="switchTab('export'); selectedCutListForExport = selectedCutList"
+                  class="flex items-center gap-1.5 px-3 py-1.5 text-xs bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors cursor-pointer"
+                >
+                  Export →
+                </button>
+              </div>
+              <div class="flex gap-4 mt-3 text-sm text-slate-600">
+                <span x-text="selectedCutList ? selectedCutList.segments.length + ' segments' : ''"></span>
+                <span x-text="selectedCutList ? 'Total: ' + formatDuration(selectedCutList.total_duration) : ''"></span>
+              </div>
+            </div>
+
+            <!-- Timeline visualization -->
+            <div x-show="selectedCutList && selectedCutList.segments && selectedCutList.segments.length > 0"
+                 class="bg-white rounded-xl border border-slate-200 p-4">
+              <h4 class="text-sm font-semibold text-slate-700 mb-3">Timeline</h4>
+
+              <!-- Source file legend -->
+              <div class="flex flex-wrap gap-2 mb-3">
+                <template x-for="(color, file) in timelineColorMap" :key="file">
+                  <div class="flex items-center gap-1.5 text-xs text-slate-600">
+                    <div class="w-3 h-3 rounded-sm" :style="'background:' + color"></div>
+                    <span x-text="basename(file)"></span>
+                  </div>
+                </template>
+              </div>
+
+              <!-- Timeline bar -->
+              <div class="timeline-container" role="img" aria-label="Segment timeline visualization">
+                <template x-for="(block, idx) in timelineBlocks" :key="idx">
+                  <div
+                    class="timeline-block"
+                    :style="'left:' + block.left + '%;width:' + block.width + '%;background:' + block.color"
+                    :title="basename(block.source_file) + ' ' + formatTimestamp(block.start) + ' → ' + formatTimestamp(block.end)"
+                  ></div>
+                </template>
+              </div>
+              <div class="flex justify-between text-xs text-slate-400 mt-1">
+                <span x-text="timelineStart !== null ? formatTimestamp(timelineStart) : ''"></span>
+                <span x-text="timelineEnd !== null ? formatTimestamp(timelineEnd) : ''"></span>
+              </div>
+            </div>
+
+            <!-- Segments table -->
+            <div x-show="selectedCutList && selectedCutList.segments" class="bg-white rounded-xl border border-slate-200 overflow-hidden">
+              <table class="w-full text-sm">
+                <thead class="bg-slate-50 border-b border-slate-200">
+                  <tr>
+                    <th class="px-4 py-2.5 text-left text-xs font-semibold text-slate-600 uppercase tracking-wide w-8">#</th>
+                    <th class="px-4 py-2.5 text-left text-xs font-semibold text-slate-600 uppercase tracking-wide">Source File</th>
+                    <th class="px-4 py-2.5 text-left text-xs font-semibold text-slate-600 uppercase tracking-wide">Start</th>
+                    <th class="px-4 py-2.5 text-left text-xs font-semibold text-slate-600 uppercase tracking-wide">End</th>
+                    <th class="px-4 py-2.5 text-left text-xs font-semibold text-slate-600 uppercase tracking-wide">Description</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                  <template x-for="seg in (selectedCutList ? selectedCutList.segments : [])" :key="seg.order">
+                    <tr class="hover:bg-slate-50">
+                      <td class="px-4 py-2.5 text-slate-500 text-xs" x-text="seg.order + 1"></td>
+                      <td class="px-4 py-2.5">
+                        <div class="flex items-center gap-2">
+                          <div class="w-2 h-2 rounded-full shrink-0"
+                               :style="'background:' + (timelineColorMap[seg.source_file] || '#94a3b8')"></div>
+                          <span class="text-slate-700 text-xs truncate max-w-32" x-text="basename(seg.source_file)"></span>
+                        </div>
+                      </td>
+                      <td class="px-4 py-2.5 font-mono text-xs text-indigo-600" x-text="formatTimestamp(seg.start)"></td>
+                      <td class="px-4 py-2.5 font-mono text-xs text-indigo-600" x-text="formatTimestamp(seg.end)"></td>
+                      <td class="px-4 py-2.5 text-slate-600 text-xs" x-text="seg.description"></td>
+                    </tr>
+                  </template>
+                </tbody>
+              </table>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ================================================================
+         SECTION 4 – EXPORT
+         ================================================================ -->
+    <section x-show="activeTab === 'export'" x-cloak role="tabpanel" id="panel-export" aria-label="Export">
+
+      <h2 class="text-lg font-semibold text-slate-800 mb-4">Export</h2>
+
+      <!-- No cut list state -->
+      <div x-show="!selectedCutListForExport" class="text-center py-16 bg-white rounded-xl border border-slate-200">
+        <div class="text-5xl mb-4">📤</div>
+        <p class="text-slate-600 font-medium text-lg mb-2">No cut list selected</p>
+        <p class="text-slate-400 text-sm max-w-sm mx-auto mb-6">
+          Generate a cut list via the <strong>Curate</strong> tab, or select one from the <strong>Cut Lists</strong> tab first.
+        </p>
+        <div class="flex justify-center gap-3">
+          <button @click="switchTab('curate')" class="px-4 py-2 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 cursor-pointer">
+            Go to Curate
+          </button>
+          <button @click="switchTab('cutlists')" class="px-4 py-2 text-sm bg-white border border-slate-300 rounded-lg hover:bg-slate-50 cursor-pointer">
+            View Cut Lists
+          </button>
+        </div>
+      </div>
+
+      <!-- Export panel -->
+      <div x-show="selectedCutListForExport" class="space-y-4">
+
+        <!-- Selected cut list summary -->
+        <div class="bg-white rounded-xl border border-slate-200 p-4">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-xs text-slate-500 mb-0.5">Exporting cut list</p>
+              <h3 class="font-semibold text-slate-800" x-text="selectedCutListForExport ? selectedCutListForExport.theme : ''"></h3>
+              <p class="text-xs text-slate-500 mt-0.5">
+                <span x-text="selectedCutListForExport ? selectedCutListForExport.segments.length + ' segments · ' + formatDuration(selectedCutListForExport.total_duration) : ''"></span>
+              </p>
+            </div>
+            <button
+              @click="selectedCutListForExport = null"
+              class="text-slate-400 hover:text-slate-600 text-sm cursor-pointer"
+              aria-label="Deselect cut list"
+            >✕</button>
+          </div>
+        </div>
+
+        <!-- Export error -->
+        <div x-show="exportError" class="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm" x-text="exportError"></div>
+
+        <!-- Export format cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+          <!-- EDL -->
+          <div class="bg-white rounded-xl border border-slate-200 p-5 flex flex-col">
+            <div class="text-3xl mb-3">🎞️</div>
+            <h3 class="font-semibold text-slate-800 mb-1">EDL</h3>
+            <p class="text-xs text-slate-500 mb-4 flex-1">CMX 3600 Edit Decision List — compatible with DaVinci Resolve, Premiere Pro, Avid, and most professional NLEs.</p>
+            <div class="flex items-center gap-2 mb-3">
+              <label class="text-xs text-slate-500" for="fps-edl">FPS:</label>
+              <select id="fps-edl" x-model="exportFps" class="text-xs border border-slate-300 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-indigo-300">
+                <option value="24">24</option>
+                <option value="25">25</option>
+                <option value="30">30</option>
+                <option value="60">60</option>
+              </select>
+            </div>
+            <button
+              @click="doExport('edl')"
+              :disabled="exportingFormat === 'edl' || !selectedCutListForExport"
+              class="flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-slate-700 rounded-lg hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
+              aria-label="Export as EDL"
+            >
+              <span x-show="exportingFormat === 'edl'" class="spinner"></span>
+              <span x-text="exportingFormat === 'edl' ? 'Exporting…' : 'Download EDL'"></span>
+            </button>
+          </div>
+
+          <!-- FCPXML -->
+          <div class="bg-white rounded-xl border border-slate-200 p-5 flex flex-col">
+            <div class="text-3xl mb-3">🍎</div>
+            <h3 class="font-semibold text-slate-800 mb-1">FCPXML</h3>
+            <p class="text-xs text-slate-500 mb-4 flex-1">Final Cut Pro XML 1.8 — import directly into Final Cut Pro X for professional post-production.</p>
+            <div class="flex items-center gap-2 mb-3">
+              <label class="text-xs text-slate-500" for="fps-fcpxml">FPS:</label>
+              <select id="fps-fcpxml" x-model="exportFps" class="text-xs border border-slate-300 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-indigo-300">
+                <option value="24">24</option>
+                <option value="25">25</option>
+                <option value="30">30</option>
+                <option value="60">60</option>
+              </select>
+            </div>
+            <button
+              @click="doExport('fcpxml')"
+              :disabled="exportingFormat === 'fcpxml' || !selectedCutListForExport"
+              class="flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-slate-700 rounded-lg hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
+              aria-label="Export as FCPXML"
+            >
+              <span x-show="exportingFormat === 'fcpxml'" class="spinner"></span>
+              <span x-text="exportingFormat === 'fcpxml' ? 'Exporting…' : 'Download FCPXML'"></span>
+            </button>
+          </div>
+
+          <!-- DaVinci -->
+          <div class="bg-white rounded-xl border border-slate-200 p-5 flex flex-col">
+            <div class="text-3xl mb-3">🎬</div>
+            <h3 class="font-semibold text-slate-800 mb-1">DaVinci Resolve</h3>
+            <p class="text-xs text-slate-500 mb-4 flex-1">Python automation script using DaVinci Resolve's scripting API to create a timeline automatically.</p>
+            <div class="flex items-center gap-2 mb-3">
+              <label class="text-xs text-slate-500" for="fps-davinci">FPS:</label>
+              <select id="fps-davinci" x-model="exportFps" class="text-xs border border-slate-300 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-indigo-300">
+                <option value="24">24</option>
+                <option value="25">25</option>
+                <option value="30">30</option>
+                <option value="60">60</option>
+              </select>
+            </div>
+            <button
+              @click="doExport('davinci')"
+              :disabled="exportingFormat === 'davinci' || !selectedCutListForExport"
+              class="flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-slate-700 rounded-lg hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
+              aria-label="Export as DaVinci Resolve Script"
+            >
+              <span x-show="exportingFormat === 'davinci'" class="spinner"></span>
+              <span x-text="exportingFormat === 'davinci' ? 'Exporting…' : 'Download Script'"></span>
+            </button>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ============================== ALPINE APP ============================== -->
+  <script>
+    function snipsnap() {
+      return {
+        // Navigation
+        activeTab: 'transcriptions',
+        tabs: [
+          { id: 'transcriptions', label: '📄 Transcriptions' },
+          { id: 'curate',         label: '✨ Curate'         },
+          { id: 'cutlists',       label: '🎬 Cut Lists'      },
+          { id: 'export',         label: '📤 Export'         },
+        ],
+
+        // Transcriptions
+        transcriptions: [],
+        loadingTranscriptions: false,
+        transcriptionsError: '',
+        selectedTranscription: null,
+        loadingSegments: false,
+        segmentSearch: '',
+
+        // Curation
+        curatePrompt: '',
+        curating: false,
+        curateError: '',
+        lastCutList: null,
+
+        // Cut lists
+        cutLists: [],
+        loadingCutLists: false,
+        cutListsError: '',
+        selectedCutList: null,
+        loadingCutListDetail: false,
+
+        // Export
+        selectedCutListForExport: null,
+        exportingFormat: '',
+        exportFps: '24',
+        exportError: '',
+
+        // ── Computed ──────────────────────────────────────────────────────────
+
+        get filteredSegments() {
+          if (!this.selectedTranscription || !this.selectedTranscription.segments) return [];
+          const q = this.segmentSearch.toLowerCase().trim();
+          if (!q) return this.selectedTranscription.segments;
+          return this.selectedTranscription.segments.filter(s =>
+            s.text.toLowerCase().includes(q)
+          );
+        },
+
+        get timelineColorMap() {
+          if (!this.selectedCutList || !this.selectedCutList.segments) return {};
+          const palette = [
+            '#6366f1', '#f59e0b', '#10b981', '#ef4444', '#8b5cf6',
+            '#ec4899', '#14b8a6', '#f97316', '#06b6d4', '#84cc16',
+          ];
+          const map = {};
+          let idx = 0;
+          for (const seg of this.selectedCutList.segments) {
+            if (!(seg.source_file in map)) {
+              map[seg.source_file] = palette[idx % palette.length];
+              idx++;
+            }
+          }
+          return map;
+        },
+
+        get timelineStart() {
+          if (!this.selectedCutList || !this.selectedCutList.segments || this.selectedCutList.segments.length === 0) return null;
+          return Math.min(...this.selectedCutList.segments.map(s => s.start));
+        },
+
+        get timelineEnd() {
+          if (!this.selectedCutList || !this.selectedCutList.segments || this.selectedCutList.segments.length === 0) return null;
+          return Math.max(...this.selectedCutList.segments.map(s => s.end));
+        },
+
+        get timelineBlocks() {
+          if (!this.selectedCutList || !this.selectedCutList.segments || this.selectedCutList.segments.length === 0) return [];
+          const start = this.timelineStart;
+          const end   = this.timelineEnd;
+          const range = end - start;
+          if (range <= 0) return [];
+          return this.selectedCutList.segments.map(seg => ({
+            source_file: seg.source_file,
+            start: seg.start,
+            end:   seg.end,
+            left:  ((seg.start - start) / range * 100).toFixed(2),
+            width: Math.max(0.5, ((seg.end - seg.start) / range * 100)).toFixed(2),
+            color: this.timelineColorMap[seg.source_file] || '#94a3b8',
+          }));
+        },
+
+        // ── Lifecycle ─────────────────────────────────────────────────────────
+
+        init() {
+          this.loadTranscriptions();
+          this.loadCutLists();
+        },
+
+        // ── Navigation ────────────────────────────────────────────────────────
+
+        switchTab(tabId) {
+          this.activeTab = tabId;
+          if (tabId === 'transcriptions') this.loadTranscriptions();
+          if (tabId === 'cutlists')       this.loadCutLists();
+        },
+
+        // ── Transcriptions ────────────────────────────────────────────────────
+
+        async loadTranscriptions() {
+          this.loadingTranscriptions = true;
+          this.transcriptionsError = '';
+          try {
+            const resp = await fetch('/api/transcriptions');
+            if (!resp.ok) throw new Error(`HTTP ${resp.status}: ${resp.statusText}`);
+            this.transcriptions = await resp.json();
+          } catch (e) {
+            this.transcriptionsError = 'Failed to load transcriptions: ' + e.message;
+          } finally {
+            this.loadingTranscriptions = false;
+          }
+        },
+
+        async selectTranscription(meta) {
+          // Optimistic: show the meta immediately, then load full detail
+          this.selectedTranscription = { ...meta, segments: null };
+          this.segmentSearch = '';
+          this.loadingSegments = true;
+          try {
+            const encoded = encodeURIComponent(meta.source_file).replace(/%2F/g, '/');
+            const resp = await fetch(`/api/transcriptions/${encoded}`);
+            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+            this.selectedTranscription = await resp.json();
+          } catch (e) {
+            this.transcriptionsError = 'Failed to load segments: ' + e.message;
+          } finally {
+            this.loadingSegments = false;
+          }
+        },
+
+        // ── Curation ──────────────────────────────────────────────────────────
+
+        async runCuration() {
+          if (!this.curatePrompt.trim() || this.curating) return;
+          this.curating = true;
+          this.curateError = '';
+          this.lastCutList = null;
+          try {
+            const resp = await fetch('/api/curate', {
+              method:  'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body:    JSON.stringify({ prompt: this.curatePrompt.trim() }),
+            });
+            const data = await resp.json();
+            if (!resp.ok) {
+              throw new Error(data.detail || `HTTP ${resp.status}`);
+            }
+            this.lastCutList = data;
+            // Refresh cut list sidebar
+            await this.loadCutLists();
+          } catch (e) {
+            this.curateError = 'Curation failed: ' + e.message;
+          } finally {
+            this.curating = false;
+          }
+        },
+
+        // ── Cut Lists ─────────────────────────────────────────────────────────
+
+        async loadCutLists() {
+          this.loadingCutLists = true;
+          this.cutListsError = '';
+          try {
+            const resp = await fetch('/api/cutlists');
+            if (!resp.ok) throw new Error(`HTTP ${resp.status}: ${resp.statusText}`);
+            this.cutLists = await resp.json();
+          } catch (e) {
+            this.cutListsError = 'Failed to load cut lists: ' + e.message;
+          } finally {
+            this.loadingCutLists = false;
+          }
+        },
+
+        async selectCutList(cl) {
+          this.selectedCutList = cl;
+        },
+
+        async selectCutListById(id) {
+          this.loadingCutListDetail = true;
+          try {
+            const resp = await fetch(`/api/cutlists/${id}`);
+            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+            this.selectedCutList = await resp.json();
+          } catch (e) {
+            this.cutListsError = 'Failed to load cut list: ' + e.message;
+          } finally {
+            this.loadingCutListDetail = false;
+          }
+        },
+
+        // ── Export ────────────────────────────────────────────────────────────
+
+        async doExport(format) {
+          if (!this.selectedCutListForExport || this.exportingFormat) return;
+          this.exportingFormat = format;
+          this.exportError = '';
+          try {
+            const resp = await fetch(`/api/export/${this.selectedCutListForExport.id}`, {
+              method:  'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body:    JSON.stringify({ format, fps: parseFloat(this.exportFps) }),
+            });
+            if (!resp.ok) {
+              const err = await resp.json().catch(() => ({ detail: resp.statusText }));
+              throw new Error(err.detail || `HTTP ${resp.status}`);
+            }
+            // Extract filename from Content-Disposition header
+            const disposition = resp.headers.get('content-disposition') || '';
+            let filename = `${this.selectedCutListForExport.id}.${format === 'davinci' ? 'py' : format}`;
+            const match = disposition.match(/filename="([^"]+)"/);
+            if (match) filename = match[1];
+
+            const blob = await resp.blob();
+            const url  = URL.createObjectURL(blob);
+            const a    = document.createElement('a');
+            a.href     = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+          } catch (e) {
+            this.exportError = 'Export failed: ' + e.message;
+          } finally {
+            this.exportingFormat = '';
+          }
+        },
+
+        // ── Helpers ───────────────────────────────────────────────────────────
+
+        formatDuration(secs) {
+          if (secs == null || isNaN(secs)) return '0s';
+          const h = Math.floor(secs / 3600);
+          const m = Math.floor((secs % 3600) / 60);
+          const s = Math.floor(secs % 60);
+          if (h > 0) return `${h}h ${m}m ${s}s`;
+          if (m > 0) return `${m}m ${s}s`;
+          return `${s}s`;
+        },
+
+        formatTimestamp(secs) {
+          if (secs == null || isNaN(secs)) return '0:00';
+          const h = Math.floor(secs / 3600);
+          const m = Math.floor((secs % 3600) / 60);
+          const s = Math.floor(secs % 60);
+          const ms = Math.round((secs % 1) * 10);
+          const mm = String(m).padStart(2, '0');
+          const ss = String(s).padStart(2, '0');
+          if (h > 0) return `${h}:${mm}:${ss}`;
+          return `${mm}:${ss}.${ms}`;
+        },
+
+        formatDate(iso) {
+          if (!iso) return '';
+          try {
+            return new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+          } catch {
+            return iso;
+          }
+        },
+
+        basename(path) {
+          if (!path) return '';
+          return path.split('/').pop() || path;
+        },
+      };
+    }
+  </script>
+
+</body>
+</html>

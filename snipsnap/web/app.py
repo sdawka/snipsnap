@@ -23,7 +23,7 @@ from typing import List, Optional
 
 import openai
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import Response
+from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
@@ -234,6 +234,21 @@ def _cut_list_detail(cl: object) -> CutListDetail:
             for s in cl.segments
         ],
     )
+
+
+# ---------------------------------------------------------------------------
+# Root — serve the SPA frontend
+# ---------------------------------------------------------------------------
+
+
+@app.get("/")
+def serve_frontend() -> FileResponse:
+    """Serve the single-page application frontend.
+
+    Returns:
+        The ``index.html`` file from the static directory.
+    """
+    return FileResponse(str(_STATIC_DIR / "index.html"))
 
 
 # ---------------------------------------------------------------------------
