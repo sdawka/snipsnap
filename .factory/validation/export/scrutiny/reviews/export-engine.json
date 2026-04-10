@@ -1,0 +1,39 @@
+{
+  "featureId": "export-engine",
+  "reviewedAt": "2026-04-10T21:46:15Z",
+  "commitId": "6d38319",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "fail",
+  "codeReview": {
+    "summary": "The feature delivers substantial export functionality and broad tests, but FCPXML path conversion has a correctness bug that breaks media references for relative source paths.",
+    "issues": [
+      {
+        "file": "snipsnap/export/fcpxml.py",
+        "line": 52,
+        "severity": "blocking",
+        "description": "_asset_src() drops the first path component by iterating path.parts[1:], so relative paths are truncated (e.g., source_file='videos/interview.mp4' becomes src='file:///interview.mp4'). This produces incorrect asset URIs and can prevent FCPXML imports from resolving media."
+      },
+      {
+        "file": "tests/test_export.py",
+        "line": 649,
+        "severity": "non_blocking",
+        "description": "FCPXML src validation only asserts that src starts with 'file:///' and does not verify full path fidelity, so the truncation bug is not detected. Add path-correctness assertions for both relative and absolute source_file values."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "skills",
+      "observation": "The backend-worker skill requires RED-first testing (or explicit deviation), but this run implemented export modules before creating tests while still reporting followedProcedure=true.",
+      "evidence": "worker-transcripts.jsonl skeleton for session 069b1850-fb3f-4756-8e27-9b5dc50d60d5 shows Create snipsnap/export/edl.py, fcpxml.py, davinci.py before Create tests/test_export.py; .factory/skills/backend-worker/SKILL.md lines 28-33 define RED-first and deviation reporting."
+    },
+    {
+      "area": "knowledge",
+      "observation": "Relative source paths are a real pipeline case and should be treated as such in export logic/tests.",
+      "evidence": "snipsnap/transcription/base.py line 56 discovers paths via folder.rglob(...), and snipsnap/transcription/whisper_local.py line 91 persists source_file=str(video_path), which can be relative when folder_path is relative."
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "Fail: FCPXML export has a blocking media-path bug for relative source paths; otherwise implementation and test breadth are strong."
+}

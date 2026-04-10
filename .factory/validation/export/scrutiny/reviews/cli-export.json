@@ -1,0 +1,33 @@
+{
+  "featureId": "cli-export",
+  "reviewedAt": "2026-04-10T21:46:08Z",
+  "commitId": "0818d12",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "pass",
+  "codeReview": {
+    "summary": "The feature implementation satisfies the export CLI requirements: format selection, --fps and --output flags, clear missing-cut-list behavior, default output under data_dir/exports, and broad test coverage across EDL/FCPXML/DaVinci plus storage-backed pipeline scenarios. I found one non-blocking UX inconsistency in help text.",
+    "issues": [
+      {
+        "file": "snipsnap/cli.py",
+        "line": 388,
+        "severity": "non_blocking",
+        "description": "The --output help text says the default is `<cut-list-id>.<format-extension>`, but implementation now defaults to `<data_dir>/exports/<cut-list-id><ext>` (see lines 447-451). This can mislead users about where files are written when --output is omitted."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "skills",
+      "observation": "The backend-worker skill's RED-first instruction is ambiguous for CLI features that already exist; this worker edited implementation before adding tests but reported `followedProcedure: true`.",
+      "evidence": "Transcript skeleton shows edits to snipsnap/cli.py before the large test additions in tests/test_cli.py; handoff.skillFeedback includes `followedProcedure: true` plus a suggested skill change about RED-first flexibility."
+    },
+    {
+      "area": "knowledge",
+      "observation": "Test/runtime artifact handling for export outputs is not clearly documented in shared state, which can leave confusing untracked files in the repo root.",
+      "evidence": "Session context shows `?? test-uuid-1234.edl` in git status, and handoff.discoveredIssues explicitly notes root-level EDL artifact accumulation from prior default path behavior."
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "Reviewed cli-export commit 0818d12, transcript skeleton, and shared-state docs. The feature is functionally complete and well-tested for required behaviors; status is pass with one non-blocking help-text mismatch and two shared-state observations."
+}

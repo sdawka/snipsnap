@@ -152,3 +152,8 @@ This three-pass approach allows the system to scale across many hours of source 
 - **Cut list segments reference existing transcriptions.** Every `source_file` in a CutSegment must correspond to a transcription that exists in storage.
 - **CLI and web dashboard share storage.** Both interfaces read and write the same JSON files on disk. There is no separate database or state store.
 - **Export is a pure transformation.** Export generators read a CutList and produce an output file. They do not modify stored data.
+
+## Export Path and Artifact Notes
+
+- `source_file` values can be relative paths depending on how transcription discovery is invoked. Exporters that construct file URIs (especially FCPXML) must preserve the full relative path components rather than dropping intermediate directories.
+- CLI export defaults to writing files under `<data_dir>/exports/`. Validation/test flows should prefer sandboxed `--data-dir` values to avoid leaving runtime export artifacts in the repository root.
