@@ -1,0 +1,44 @@
+{
+  "featureId": "transcription-engine",
+  "reviewedAt": "2026-04-10T20:23:05Z",
+  "commitId": "12fe693",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "fail",
+  "codeReview": {
+    "summary": "Provider abstraction and WhisperLocalProvider are implemented with strong baseline coverage, but batch skip logic is incorrect for videos that share the same filename stem in different directories, violating the requirement to process all discovered videos.",
+    "issues": [
+      {
+        "file": "snipsnap/transcription/base.py",
+        "line": 115,
+        "severity": "blocking",
+        "description": "`transcribe_batch()` uses `transcription_exists(str(video_path))` to decide skips, but storage keys transcriptions by filename stem only. If two different files share a stem (e.g. `a/clip.mp4` and `b/clip.mkv`), the second file is incorrectly treated as already transcribed and skipped, so not all discovered videos are processed."
+      },
+      {
+        "file": "tests/test_transcription.py",
+        "line": 60,
+        "severity": "non_blocking",
+        "description": "Test fixtures explicitly avoid same-stem filenames (comment notes storage uses stem keys), so the collision/false-skip behavior is not covered by tests and can regress unnoticed."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "skills",
+      "observation": "The backend-worker skill requires RED-first test writing, but transcript order shows implementation files were created before tests while `skillFeedback.followedProcedure` was marked true.",
+      "evidence": "Transcript skeleton: `Create snipsnap/transcription/base.py` and `Create snipsnap/transcription/whisper_local.py` appear before `Create tests/test_transcription.py`; handoff has `skillFeedback.followedProcedure: true`."
+    },
+    {
+      "area": "services",
+      "observation": "After introducing `@pytest.mark.integration` tests that may download Whisper models, the shared test command still runs full tests without excluding integration markers.",
+      "evidence": "`tests/test_transcription.py` contains `@pytest.mark.integration` (line ~627 in commit), but `.factory/services.yaml` command `test: python -m pytest tests/ -x -v --tb=short -n 4` has no `-m 'not integration'`."
+    },
+    {
+      "area": "knowledge",
+      "observation": "A storage key collision behavior materially affected this feature's batch semantics, but this caveat was not captured in shared library docs for future workers at the time.",
+      "evidence": "Handoff `discoveredIssues` reports stem-based collisions; `.factory/library/architecture.md` and `.factory/library/environment.md` do not mention transcription keying/collision constraints."
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "Review failed due to a blocking correctness issue: batch skip logic can incorrectly skip distinct videos with identical stems because storage keying is stem-based. Additional observations were recorded for skill-procedure reporting and shared-state command/docs gaps."
+}

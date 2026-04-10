@@ -1,0 +1,39 @@
+{
+  "featureId": "cli-transcribe",
+  "reviewedAt": "2026-04-10T20:22:42Z",
+  "commitId": "926b58b",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "fail",
+  "codeReview": {
+    "summary": "The feature delivers the transcribe CLI flow, storage collision fix, and broad test coverage, but it does not fully satisfy the stated exit-code contract for error cases. Partial batch failures still return exit code 0, which conflicts with the requirement of non-zero on error.",
+    "issues": [
+      {
+        "file": "snipsnap/cli.py",
+        "line": 147,
+        "severity": "blocking",
+        "description": "Exit status is only non-zero when every file fails (`failed > 0 and completed == 0 and skipped == 0`). With mixed outcomes (e.g., one file fails and another succeeds/skips), the command exits 0 despite encountering errors. The feature spec requires non-zero on errors."
+      },
+      {
+        "file": "snipsnap/cli.py",
+        "line": 89,
+        "severity": "non_blocking",
+        "description": "The Whisper model is loaded before checking whether any videos exist, so empty folders still incur model-load overhead before returning \"No video files found\". This is a UX/performance issue but does not block core functionality."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "skills",
+      "observation": "The backend-worker skill prescribes strict tests-first RED flow, but the worker transcript shows implementation edits preceding the new CLI test cycle. This mismatch appears recurrent for CLI-oriented features and suggests the skill procedure should be clarified to allow pragmatic ordering when needed.",
+      "evidence": ".factory/skills/backend-worker/SKILL.md:28,32 require RED-first; worker-transcripts.jsonl entry for session 7b729807-6bce-4876-8d2c-5b443fb4b4ce shows storage/CLI edits before the dedicated RED check and handoff.skillFeedback suggests updating this guidance."
+    },
+    {
+      "area": "conventions",
+      "observation": "Architecture docs state CLI should remain a thin interface over shared pipeline logic, but transcribe batching/skip/error control flow is duplicated in CLI rather than delegated to shared transcription batch orchestration. AGENTS.md may need a clearer enforcement note to reduce drift from the architecture rule.",
+      "evidence": ".factory/library/architecture.md:64,95 describe thin interfaces; snipsnap/cli.py (commit 926b58b) lines 111-133 implement batch orchestration logic directly."
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "Review of commit 926b58b found one blocking issue: partial transcription failures still return exit code 0, violating the feature’s non-zero-on-error requirement. A non-blocking UX issue (model loading before empty-folder check) is also present. Shared-state observations were recorded for skill-procedure clarity and architecture-convention enforcement."
+}

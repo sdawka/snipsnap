@@ -1,0 +1,34 @@
+{
+  "featureId": "curation-engine",
+  "reviewedAt": "2026-04-10T20:22:34Z",
+  "commitId": "61ec7ba",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "fail",
+  "codeReview": {
+    "summary": "Core curation flow, error mapping, and persistence are implemented, but the engine does not enforce required cut-segment validity constraints before saving output.",
+    "issues": [
+      {
+        "file": "snipsnap/curation/engine.py",
+        "line": 163,
+        "severity": "blocking",
+        "description": "LLM-provided segments are accepted without validating that source_file exists in the input transcriptions and that start/end are within the referenced transcription duration (and end > start). _parse_cut_list_response() directly constructs CutSegment objects and only clamps negative durations in total_duration via max(0.0, end-start), so invalid ranges can still be persisted in the cut list."
+      },
+      {
+        "file": "tests/test_curation.py",
+        "line": 666,
+        "severity": "non_blocking",
+        "description": "Multi-pass tests mock Pass 2 with non-JSON text (\"Relevant videos identified.\"), which exercises fallback-to-all behavior instead of the intended relevant-file parsing path. This leaves the Pass 2 selection contract weakly covered."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "skills",
+      "observation": "The backend-worker skill requires manual verification for engine features, but this run records only automated validator commands while still marking followedProcedure=true, suggesting a mismatch between skill procedure and enforcement/reporting.",
+      "evidence": ".factory/skills/backend-worker/SKILL.md:51-55 requires manual verification; handoff 2026-04-10T19-52-29-286Z__curation-engine__9f151315-e328-4269-9607-3f496e419326.json shows only commandsRun at lines 15-35 and skillFeedback.followedProcedure=true at line 153."
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "Review failed due to a blocking correctness gap: cut segments are not validated against transcription source/bounds before persistence. Non-blocking: multi-pass tests currently miss direct coverage of successful Pass 2 relevant-file parsing."
+}

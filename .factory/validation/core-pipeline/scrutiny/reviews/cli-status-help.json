@@ -1,0 +1,21 @@
+{
+  "featureId": "cli-status-help",
+  "reviewedAt": "2026-04-10T20:22:48Z",
+  "commitId": "7ba7770",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "pass",
+  "codeReview": {
+    "summary": "The feature implementation satisfies the described behavior: `status` reports transcription/cut-list counts and details with empty-state handling, root help/version coverage is present, and export help/ID discoverability paths are covered by CLI tests.",
+    "issues": []
+  },
+  "sharedStateObservations": [
+    {
+      "area": "skills",
+      "observation": "The backend-worker skill requires test-first (RED), but this worker implemented CLI command changes before adding tests while handoff.skillFeedback still reported followedProcedure=true.",
+      "evidence": ".factory/skills/backend-worker/SKILL.md step 2 says 'Write tests first (RED)'; transcript skeleton for session f3afc3a3-89b1-4906-bfd2-6a67c2689edd shows Edit to snipsnap/cli.py before Edit to tests/test_cli.py; handoff skillFeedback.followedProcedure is true."
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "Reviewed transcript skeleton and commit 7ba7770 for feature cli-status-help. No blocking or non-blocking code defects were found for the requested feature behavior; review passes. One process-level skill-procedure observation was recorded."
+}
