@@ -1,0 +1,59 @@
+{
+  "milestone": "export",
+  "round": 1,
+  "status": "fail",
+  "validatorsRun": {
+    "test": {
+      "passed": true,
+      "command": ".venv/bin/python -m pytest tests/ -x -v --tb=short -n 4",
+      "exitCode": 0
+    },
+    "typecheck": {
+      "passed": true,
+      "command": ".venv/bin/python -m mypy snipsnap/ --ignore-missing-imports",
+      "exitCode": 0
+    },
+    "lint": {
+      "passed": true,
+      "command": ".venv/bin/python -m ruff check snipsnap/ tests/",
+      "exitCode": 0
+    }
+  },
+  "reviewsSummary": {
+    "total": 2,
+    "passed": 1,
+    "failed": 1,
+    "failedFeatures": [
+      "export-engine"
+    ]
+  },
+  "blockingIssues": [
+    {
+      "featureId": "export-engine",
+      "severity": "blocking",
+      "description": "snipsnap/export/fcpxml.py::_asset_src() drops the first path component for relative source paths (e.g., videos/interview.mp4 -> file:///interview.mp4), generating incorrect media URIs that can break FCPXML import resolution."
+    }
+  ],
+  "appliedUpdates": [
+    {
+      "target": "library",
+      "description": "Added export path guidance to .factory/library/architecture.md: source_file may be relative and exporters must preserve full relative path components; CLI export default output is <data_dir>/exports and validators should use sandboxed data dirs to avoid root artifacts.",
+      "sourceFeature": "export-engine"
+    }
+  ],
+  "suggestedGuidanceUpdates": [
+    {
+      "target": "backend-worker skill",
+      "suggestion": "Clarify RED-first expectations for incremental/legacy-file features and require explicit skillFeedback deviations when implementation is changed before tests.",
+      "evidence": "Both export-engine and cli-export reviews observed implementation-first sequencing while reporting followedProcedure=true, indicating ambiguity and inconsistent reporting.",
+      "isSystemic": true
+    }
+  ],
+  "rejectedObservations": [
+    {
+      "observation": "Duplicate RED-first ambiguity note from cli-export review.",
+      "reason": "duplicate"
+    }
+  ],
+  "previousRound": null
+}

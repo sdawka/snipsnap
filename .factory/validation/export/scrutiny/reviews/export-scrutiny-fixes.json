@@ -1,0 +1,15 @@
+{
+  "featureId": "export-scrutiny-fixes",
+  "reviewedAt": "2026-04-10T21:55:11Z",
+  "commitId": "e98301f",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "pass",
+  "codeReview": {
+    "summary": "The fix commit directly resolves the prior blocking FCPXML URI truncation for relative source paths, adds targeted regression coverage for both relative and absolute source_file values, and updates CLI export --output help text to match actual default behavior.",
+    "issues": []
+  },
+  "sharedStateObservations": [],
+  "addressesFailureFrom": ".factory/validation/export/scrutiny/reviews/export-engine.json",
+  "summary": "Pass: e98301f addresses the original export-engine failure by fixing _asset_src path handling and adding path-fidelity regressions; the CLI --output default-path help text is also corrected as requested."
+}
