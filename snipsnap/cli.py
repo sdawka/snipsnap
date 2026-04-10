@@ -450,17 +450,22 @@ def export(
     fmt = output_format.lower()
     try:
         if fmt == "edl":
-            from snipsnap.export.edl import EDLExporter  # type: ignore[import]
+            from snipsnap.export.edl import generate_edl
 
-            EDLExporter(fps=fps).export(cut_list, output_path)
+            content = generate_edl(cut_list, frame_rate=int(fps))
         elif fmt == "fcpxml":
-            from snipsnap.export.fcpxml import FCPXMLExporter  # type: ignore[import]
+            from snipsnap.export.fcpxml import generate_fcpxml
 
-            FCPXMLExporter().export(cut_list, output_path)
+            content = generate_fcpxml(cut_list, frame_rate=int(fps))
         elif fmt == "davinci":
-            from snipsnap.export.davinci import DaVinciExporter  # type: ignore[import]
+            from snipsnap.export.davinci import generate_davinci_script
 
-            DaVinciExporter().export(cut_list, output_path)
+            content = generate_davinci_script(cut_list, frame_rate=int(fps))
+        else:
+            click.echo(f"Error: Unsupported format: {fmt}", err=True)
+            sys.exit(1)
+
+        output_path.write_text(content, encoding="utf-8")
     except ImportError as exc:
         click.echo(f"Error: Export module not available: {exc}", err=True)
         sys.exit(1)
