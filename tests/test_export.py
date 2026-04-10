@@ -21,7 +21,7 @@ import pytest
 
 from snipsnap.export.davinci import generate_davinci_script
 from snipsnap.export.edl import generate_edl, seconds_to_smpte
-from snipsnap.export.fcpxml import generate_fcpxml, seconds_to_rational
+from snipsnap.export.fcpxml import _asset_src, generate_fcpxml, seconds_to_rational
 from snipsnap.models import CutList, CutSegment
 
 # ---------------------------------------------------------------------------
@@ -138,6 +138,92 @@ def empty_cut_list() -> CutList:
         segments=[],
         total_duration=0.0,
     )
+
+
+@pytest.fixture
+def relative_path_cut_list() -> CutList:
+    """A CutList with a relative source file path (multi-component)."""
+    return CutList(
+        id="test-id-rel",
+        prompt="relative path test",
+        theme="Relative Path Test",
+        created_at=datetime(2024, 1, 1, tzinfo=timezone.utc),
+        segments=[
+            CutSegment(
+                source_file="projects/video/interview.mp4",
+                start=0.0,
+                end=5.0,
+                description="Relative path segment",
+                order=0,
+            )
+        ],
+        total_duration=5.0,
+    )
+
+
+# ===========================================================================
+# FCPXML _asset_src Path Fidelity Regression Tests
+# ===========================================================================
+
+
+class TestAssetSrcPathFidelity:
+    """Regression tests ensuring _asset_src() preserves full path components.
+
+    Bug: the original implementation used path.parts[1:] unconditionally,
+    which drops the first component of relative paths.
+    """
+
+    def test_absolute_path_produces_correct_file_uri(self) -> None:
+        """Absolute path must map to a correct file:/// URI."""
+        result = _asset_src("/videos/foo/bar.mp4")
+        assert result == "file:///videos/foo/bar.mp4"
+
+    def test_relative_path_preserves_all_components(self) -> None:
+        """Relative paths must NOT drop the first path component."""
+        result = _asset_src("some/path/to/video.mp4")
+        assert result == "file:///some/path/to/video.mp4"
+
+    def test_relative_path_single_directory_component_preserved(self) -> None:
+        """Single-directory relative paths must not become bare filenames."""
+        result = _asset_src("myfolder/video.mp4")
+        assert result == "file:///myfolder/video.mp4"
+
+    def test_relative_path_bare_filename_preserved(self) -> None:
+        """A bare filename (no directory) must remain accessible at file:///."""
+        result = _asset_src("video.mp4")
+        assert result == "file:///video.mp4"
+
+    def test_absolute_path_with_spaces_encoded(self) -> None:
+        """Spaces in absolute path components must be percent-encoded."""
+        result = _asset_src("/my videos/my file.mp4")
+        assert result.startswith("file:///")
+        assert "my%20videos" in result
+        assert "my%20file.mp4" in result
+
+    def test_relative_path_with_spaces_all_components_preserved(self) -> None:
+        """Relative paths with spaces: all components must be preserved and encoded."""
+        result = _asset_src("my videos/my file.mp4")
+        assert result.startswith("file:///")
+        assert "my%20videos" in result
+        assert "my%20file.mp4" in result
+
+    def test_fcpxml_asset_src_for_relative_path_in_full_document(
+        self, relative_path_cut_list: CutList
+    ) -> None:
+        """Integration: FCPXML generated with a relative source_file must preserve
+        all path components in the asset src attribute."""
+        content = generate_fcpxml(relative_path_cut_list)
+        # Strip DOCTYPE for ET parser
+        lines = [ln for ln in content.splitlines() if not ln.startswith("<!DOCTYPE")]
+        root = ET.fromstring("\n".join(lines))
+        asset = root.find("resources/asset")
+        assert asset is not None
+        src = asset.attrib.get("src", "")
+        assert src.startswith("file:///"), f"src should start with file:///: {src}"
+        # All three path components must be present
+        assert "projects" in src, f"First path component 'projects' missing from src: {src}"
+        assert "video" in src, f"Second path component 'video' missing from src: {src}"
+        assert "interview.mp4" in src, f"Filename missing from src: {src}"
 
 
 # ===========================================================================

@@ -385,7 +385,7 @@ def status(data_dir: Optional[str]) -> None:
     default=None,
     metavar="FILE",
     type=click.Path(),
-    help="Output file path (default: <cut-list-id>.<format-extension>).",
+    help="Output file path (default: <data-dir>/exports/<cut-list-id>.<ext>).",
 )
 @click.option(
     "--fps",

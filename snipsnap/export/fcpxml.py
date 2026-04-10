@@ -46,10 +46,22 @@ def _format_name(fps: int) -> str:
 
 
 def _asset_src(source_file: str) -> str:
-    """Convert a file path to a file:/// URI with proper encoding."""
+    """Convert a file path to a file:/// URI with proper encoding.
+
+    For absolute paths, the root component (e.g. ``/`` on POSIX) is
+    consumed by the triple-slash in ``file:///`` so it is excluded from
+    the encoded parts.  For relative paths every component must be
+    preserved — using ``parts[1:]`` would silently drop the first
+    directory, producing an incorrect URI.
+    """
     path = Path(source_file)
-    # Encode each path component (preserving drive/root on all platforms)
-    encoded_parts = [quote(part, safe="") for part in path.parts[1:]]
+    if path.is_absolute():
+        # parts[0] is the root separator ('/' on POSIX); 'file:///' already
+        # provides it, so skip it.
+        encoded_parts = [quote(part, safe="") for part in path.parts[1:]]
+    else:
+        # Relative path: keep every component.
+        encoded_parts = [quote(part, safe="") for part in path.parts]
     return "file:///" + "/".join(encoded_parts)
 
 
