@@ -1,0 +1,39 @@
+{
+  "featureId": "web-backend",
+  "reviewedAt": "2026-04-10T22:31:22Z",
+  "commitId": "2f31e84",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "fail",
+  "codeReview": {
+    "summary": "The backend endpoints and storage/engine wiring are mostly complete, but two contract-critical input-validation behaviors are incorrect: missing required fields return 422 (not 400), and invalid export FPS values can trigger 500 instead of 400.",
+    "issues": [
+      {
+        "file": "snipsnap/web/app.py",
+        "line": 59,
+        "severity": "blocking",
+        "description": "Expected behavior requires 400 for missing required fields, but the app relies on FastAPI default validation handling (422 Unprocessable Entity). This is confirmed by tests asserting 422 for missing `folder`, `prompt`, and `format` (tests/test_web.py:265, 395, 891)."
+      },
+      {
+        "file": "snipsnap/web/app.py",
+        "line": 543,
+        "severity": "blocking",
+        "description": "Export input `fps` is not validated. For invalid values (e.g., 0), `generate_edl` raises division-by-zero and the endpoint returns 500 (`Export generation failed: division by zero`) instead of 400 invalid input, violating the feature's error-handling requirement."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "skills",
+      "observation": "The `web-worker` skill mandates agent-browser verification of every web page/interaction, but this backend-only feature transcript contains no agent-browser usage while handoff skillFeedback still marks `followedProcedure: true`.",
+      "evidence": "Skill file .factory/skills/web-worker/SKILL.md (Required Skills + step 6) vs transcript skeleton for session 95c7eec6-d06d-4f61-b224-2c688d20a44b (no agent-browser tool calls)."
+    },
+    {
+      "area": "conventions",
+      "observation": "There is a mismatch between feature contract expectations and implemented/tested API semantics for request validation errors (400 expected vs 422 asserted). This behavior is not clarified in AGENTS/library docs.",
+      "evidence": "Mission feature expectedBehavior includes '400 for ... missing required fields'; tests/test_web.py asserts 422 at lines 265, 395, 891."
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "Reviewed commit 2f31e84 for feature web-backend. Core endpoint coverage is strong, but contract compliance fails on input validation semantics: missing required fields return 422 and invalid export fps can return 500 instead of 400."
+}
