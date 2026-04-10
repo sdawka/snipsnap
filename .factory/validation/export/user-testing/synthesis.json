@@ -1,0 +1,62 @@
+{
+  "milestone": "export",
+  "round": 1,
+  "status": "fail",
+  "assertionsSummary": {
+    "total": 23,
+    "passed": 20,
+    "failed": 1,
+    "blocked": 2
+  },
+  "passedAssertions": [
+    "VAL-CLI-004",
+    "VAL-CROSS-001",
+    "VAL-CROSS-002",
+    "VAL-CROSS-005",
+    "VAL-CROSS-011",
+    "VAL-CUR-012",
+    "VAL-EXP-001",
+    "VAL-EXP-002",
+    "VAL-EXP-003",
+    "VAL-EXP-004",
+    "VAL-EXP-005",
+    "VAL-EXP-006",
+    "VAL-EXP-007",
+    "VAL-EXP-008",
+    "VAL-EXP-009",
+    "VAL-EXP-010",
+    "VAL-EXP-011",
+    "VAL-EXP-012",
+    "VAL-EXP-013",
+    "VAL-EXP-014"
+  ],
+  "failedAssertions": [
+    {
+      "id": "VAL-CONFIG-002",
+      "reason": "--fps changed timecodes, but FCM line did not reflect frame-rate setting (same value in both exports)."
+    }
+  ],
+  "blockedAssertions": [
+    {
+      "id": "VAL-CROSS-003",
+      "blockedBy": "Blocked by missing web dashboard surface required by this assertion: `web-backend` and `web-frontend` remain `pending` in milestone `web-ui`, `snipsnap.web.app` is not importable, and localhost:3200 is not serving the dashboard/health endpoint."
+    },
+    {
+      "id": "VAL-CROSS-006",
+      "blockedBy": "Blocked on the same unmet web dependency: the assertion requires opening the web transcription browser after CLI transcription, but the dashboard cannot be launched/reached in this milestone context (missing `snipsnap.web.app`, no service on port 3200)."
+    }
+  ],
+  "appliedUpdates": [
+    {
+      "target": "user-testing.md",
+      "description": "Added Flow Validator Guidance: Web Dashboard Surface with deterministic availability-check steps and agent-browser session cleanup guidance.",
+      "source": "flow-report"
+    },
+    {
+      "target": "user-testing.md",
+      "description": "Replaced outdated export-module blocker notes with latest findings: VAL-CONFIG-002 failing FCM behavior and web-dependent cross assertions blocked by pending web-ui features.",
+      "source": "flow-report"
+    }
+  ],
+  "previousRound": null
+}

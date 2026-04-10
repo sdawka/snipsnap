@@ -1,0 +1,59 @@
+{
+  "assertionResults": [
+    {
+      "id": "VAL-CROSS-003",
+      "status": "blocked",
+      "reason": "Blocked by missing web dashboard surface required by this assertion: `web-backend` and `web-frontend` remain `pending` in milestone `web-ui`, `snipsnap.web.app` is not importable, and localhost:3200 is not serving the dashboard/health endpoint.",
+      "evidence": [
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/export/flow-export-web-deps/feature-status-summary.json",
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/export/flow-export-web-deps/web-app-module-spec.txt",
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/export/flow-export-web-deps/uvicorn-web-app-attempt-venv.txt",
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/export/flow-export-web-deps/web-healthcheck.txt",
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/export/flow-export-web-deps/agent-browser-open.txt",
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/export/flow-export-web-deps/web-package-files.txt"
+      ]
+    },
+    {
+      "id": "VAL-CROSS-006",
+      "status": "blocked",
+      "reason": "Blocked on the same unmet web dependency: the assertion requires opening the web transcription browser after CLI transcription, but the dashboard cannot be launched/reached in this milestone context (missing `snipsnap.web.app`, no service on port 3200).",
+      "evidence": [
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/export/flow-export-web-deps/feature-status-summary.json",
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/export/flow-export-web-deps/web-app-module-spec.txt",
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/export/flow-export-web-deps/uvicorn-web-app-attempt-venv.txt",
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/export/flow-export-web-deps/web-healthcheck.txt",
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/export/flow-export-web-deps/agent-browser-open.txt"
+      ]
+    }
+  ],
+  "frictions": [
+    {
+      "description": "`agent-browser errors` returned a very large stream of repeated `DexieError` entries that appeared unrelated to this localhost flow attempt, making console diagnostics noisy.",
+      "resolved": true,
+      "resolution": "Used direct connection/startup evidence (`curl`, import check, uvicorn import failure, and agent-browser open failure) as deterministic blockers instead.",
+      "affectedAssertions": [
+        "VAL-CROSS-003",
+        "VAL-CROSS-006"
+      ]
+    }
+  ],
+  "blockers": [
+    {
+      "description": "Required web dashboard user surface is unavailable in this milestone context: web-ui feature set is pending and ASGI app module `snipsnap.web.app` is missing, so browser-based validation cannot be executed.",
+      "affectedAssertions": [
+        "VAL-CROSS-003",
+        "VAL-CROSS-006"
+      ],
+      "quickFixAttempted": "Attempted localhost health check, direct browser open, and uvicorn startup using project venv; all failed due unreachable service/missing module."
+    }
+  ],
+  "toolsUsed": [
+    "Read",
+    "Grep",
+    "LS",
+    "Execute",
+    "agent-browser",
+    "curl",
+    "python3"
+  ]
+}

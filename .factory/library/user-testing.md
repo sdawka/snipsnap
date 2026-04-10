@@ -46,12 +46,20 @@ Testing surface, required testing skills/tools, resource cost classification per
 - Prefer `./.venv/bin/snipsnap` (or sandbox-local venv `bin/snipsnap`) instead of relying on system PATH.
 - `transcribe` uses `SNIPSNAP_DATA_DIR` env for isolation (it does not expose `--data-dir`).
 
+## Flow Validator Guidance: Web Dashboard Surface
+
+- Use `agent-browser` with a non-default session and close the session after checks complete.
+- Verify service availability with `curl -sf http://localhost:3200/health` before launching browser actions.
+- Keep web evidence deterministic: startup/import errors, healthcheck output, and browser connection results.
+- Do not rely solely on noisy browser console output when availability checks already prove surface is unreachable.
+
 ## Known External Dependency Blocker
 
 - Successful curation assertions require a valid `OPENROUTER_API_KEY`.
 - If `.env` contains a placeholder/revoked key, curation-dependent assertions should be marked blocked with captured auth-error evidence.
-- Core-pipeline rerun (round 2) confirmed curation works in this environment, but export-dependent assertions are currently blocked by missing modules:
-  - `snipsnap.export.edl`
-  - `snipsnap.export.fcpxml`
-  - `snipsnap.export.davinci`
-  This indicates export validation should be deferred to the `export` milestone unless those modules are present.
+
+## Known Validation Findings (Latest)
+
+- Export user-testing round 1 validated export module availability and passed most export assertions.
+- `VAL-CONFIG-002` currently fails: `--fps` changes EDL timecodes, but `FCM:` text remains unchanged (`NON-DROP FRAME`), so frame-rate signaling in header does not reflect configured fps.
+- `VAL-CROSS-003` and `VAL-CROSS-006` are blocked in export milestone context because web-ui features (`web-backend`, `web-frontend`) are pending and `snipsnap.web.app` is unavailable.

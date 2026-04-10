@@ -1,0 +1,84 @@
+{
+  "testedAt": "2026-04-10T22:02:57.908513+00:00",
+  "toolsUsed": [
+    "/Users/sdawka/Code/snipsnap/.venv/bin/snipsnap",
+    "/Users/sdawka/Code/snipsnap/.venv/bin/python",
+    "ffmpeg",
+    "say"
+  ],
+  "assertionResults": [
+    {
+      "id": "VAL-CROSS-001",
+      "status": "pass",
+      "reason": "Full CLI pipeline succeeded in isolation: transcribe found and processed 3 videos (exit 0), curate produced cut list 79139cbc-7fd6-4243-be85-f81440c50d60 with 3 segments (exit 0), and EDL export succeeded (exit 0). EDL references clip1/clip2/clip3 from step-1 transcriptions and source timings align with cut-list timings within 1 frame at 24fps.",
+      "evidence": [
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/export/flow-export-cross-cli/transcribe.log",
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/export/flow-export-cross-cli/curate_attempt2.log",
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/sandboxes/export/flow-export-cross-cli/data/transcriptions/clip1_9a900bad.json",
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/sandboxes/export/flow-export-cross-cli/data/transcriptions/clip2_78dd37be.json",
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/sandboxes/export/flow-export-cross-cli/data/transcriptions/clip3_85485051.json",
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/sandboxes/export/flow-export-cross-cli/data/cut_lists/79139cbc-7fd6-4243-be85-f81440c50d60.json",
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/export/flow-export-cross-cli/export_edl.log",
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/sandboxes/export/flow-export-cross-cli/data/exports/79139cbc-7fd6-4243-be85-f81440c50d60.edl",
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/export/flow-export-cross-cli/cross_assertion_analysis.json"
+      ]
+    },
+    {
+      "id": "VAL-CROSS-002",
+      "status": "pass",
+      "reason": "Transcribe \u2192 curate \u2192 export FCPXML completed successfully (all exits 0). Generated FCPXML is well-formed with <fcpxml> root, required resources/library/event/project/sequence/spine hierarchy, valid asset definitions for all three clips, and asset-clip refs that resolve to resource asset IDs.",
+      "evidence": [
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/export/flow-export-cross-cli/transcribe.log",
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/export/flow-export-cross-cli/curate_attempt2.log",
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/sandboxes/export/flow-export-cross-cli/data/cut_lists/79139cbc-7fd6-4243-be85-f81440c50d60.json",
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/export/flow-export-cross-cli/export_fcpxml.log",
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/sandboxes/export/flow-export-cross-cli/data/exports/79139cbc-7fd6-4243-be85-f81440c50d60.fcpxml",
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/export/flow-export-cross-cli/cross_assertion_analysis.json"
+      ]
+    },
+    {
+      "id": "VAL-CROSS-005",
+      "status": "pass",
+      "reason": "Cut list JSON contains required per-entry fields (source_file, start, end, description, order) for 3 entries. Export outputs map 1:1 to cut list entries: event/clip counts match across EDL, FCPXML, and DaVinci, source ordering matches, and per-row timings correspond within 1 frame tolerance.",
+      "evidence": [
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/sandboxes/export/flow-export-cross-cli/data/cut_lists/79139cbc-7fd6-4243-be85-f81440c50d60.json",
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/sandboxes/export/flow-export-cross-cli/data/exports/79139cbc-7fd6-4243-be85-f81440c50d60.edl",
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/sandboxes/export/flow-export-cross-cli/data/exports/79139cbc-7fd6-4243-be85-f81440c50d60.fcpxml",
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/sandboxes/export/flow-export-cross-cli/data/exports/79139cbc-7fd6-4243-be85-f81440c50d60.py",
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/export/flow-export-cross-cli/cross_assertion_analysis.json"
+      ]
+    },
+    {
+      "id": "VAL-CROSS-011",
+      "status": "pass",
+      "reason": "From the same cut list ID (79139cbc-7fd6-4243-be85-f81440c50d60), all three exports (EDL, FCPXML, DaVinci) succeeded (exit 0). Cross-format comparison confirms equivalent clip set, ordering, and timing representation (within 1 frame), and format-valid structures/calls are present.",
+      "evidence": [
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/export/flow-export-cross-cli/export_edl.log",
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/export/flow-export-cross-cli/export_fcpxml.log",
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/export/flow-export-cross-cli/export_davinci.log",
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/sandboxes/export/flow-export-cross-cli/data/exports/79139cbc-7fd6-4243-be85-f81440c50d60.edl",
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/sandboxes/export/flow-export-cross-cli/data/exports/79139cbc-7fd6-4243-be85-f81440c50d60.fcpxml",
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/sandboxes/export/flow-export-cross-cli/data/exports/79139cbc-7fd6-4243-be85-f81440c50d60.py",
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/export/flow-export-cross-cli/cross_assertion_analysis.json"
+      ]
+    }
+  ],
+  "frictions": [
+    {
+      "description": "Initial curation prompt produced one valid segment and discarded two due to end timestamps slightly exceeding source duration (LLM output validation).",
+      "resolved": true,
+      "resolution": "Retried curation with stricter bounded timestamp prompt (0.1s-1.5s), yielding 3 valid segments across all clips.",
+      "affectedAssertions": [
+        "VAL-CROSS-001",
+        "VAL-CROSS-002",
+        "VAL-CROSS-005",
+        "VAL-CROSS-011"
+      ],
+      "evidence": [
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/export/flow-export-cross-cli/curate.log",
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/export/flow-export-cross-cli/curate_attempt2.log"
+      ]
+    }
+  ],
+  "blockers": []
+}

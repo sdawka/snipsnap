@@ -1,0 +1,188 @@
+{
+  "groupId": "flow-export-core",
+  "testedAt": "2026-04-10T22:02:44.716757+00:00",
+  "isolation": {
+    "missionDir": "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2",
+    "dataDir": "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/sandboxes/export/flow-export-core/data",
+    "fixturesDir": "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/sandboxes/export/flow-export-core/fixtures",
+    "evidenceDir": "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/export/flow-export-core"
+  },
+  "toolsUsed": [
+    "snipsnap CLI",
+    "python subprocess"
+  ],
+  "assertionResults": [
+    {
+      "id": "VAL-CLI-004",
+      "status": "pass",
+      "reason": "status listed cut list IDs and export accepted listed ID fixture-multi.",
+      "evidence": [
+        "commands/status.txt",
+        "commands/export_multi_edl_24.txt",
+        "exports/fixture-multi-24.edl"
+      ]
+    },
+    {
+      "id": "VAL-CONFIG-002",
+      "status": "fail",
+      "reason": "--fps changed timecodes, but FCM line did not reflect frame-rate setting (same value in both exports).",
+      "evidence": [
+        "commands/export_multi_edl_24.txt",
+        "commands/export_multi_edl_30fps.txt",
+        "exports/fixture-multi-24.edl",
+        "exports/fixture-multi-30.edl"
+      ]
+    },
+    {
+      "id": "VAL-CUR-012",
+      "status": "pass",
+      "reason": "Two curate runs produced distinct cut list IDs and both were exportable.",
+      "evidence": [
+        "commands/curate_prompt_a.txt",
+        "commands/curate_prompt_b.txt",
+        "commands/curate_export_1_4d42f49b-0b03-4191-b224-fbfc8b19e939.txt",
+        "commands/curate_export_2_540e9306-86b7-49f3-8cfd-2b9759c28ee7.txt"
+      ]
+    },
+    {
+      "id": "VAL-EXP-001",
+      "status": "pass",
+      "reason": "EDL file has TITLE/FCM headers and one numbered event per segment.",
+      "evidence": [
+        "commands/export_multi_edl_24.txt",
+        "exports/fixture-multi-24.edl"
+      ]
+    },
+    {
+      "id": "VAL-EXP-002",
+      "status": "pass",
+      "reason": "FCPXML exported and parsed with required root and element hierarchy.",
+      "evidence": [
+        "commands/export_multi_fcpxml.txt",
+        "exports/fixture-multi.fcpxml"
+      ]
+    },
+    {
+      "id": "VAL-EXP-003",
+      "status": "pass",
+      "reason": "DaVinci script exported, compiles, and contains expected API calls.",
+      "evidence": [
+        "commands/export_multi_davinci.txt",
+        "exports/fixture-multi.py"
+      ]
+    },
+    {
+      "id": "VAL-EXP-004",
+      "status": "pass",
+      "reason": "All EDL timecodes match HH:MM:SS:FF with frame values valid for 24fps.",
+      "evidence": [
+        "commands/export_multi_edl_24.txt",
+        "exports/fixture-multi-24.edl"
+      ]
+    },
+    {
+      "id": "VAL-EXP-005",
+      "status": "pass",
+      "reason": "EDL record timecodes are contiguous across consecutive events.",
+      "evidence": [
+        "commands/export_multi_edl_24.txt",
+        "exports/fixture-multi-24.edl"
+      ]
+    },
+    {
+      "id": "VAL-EXP-006",
+      "status": "pass",
+      "reason": "All asset-clip ref attributes map to declared asset IDs.",
+      "evidence": [
+        "commands/export_multi_fcpxml.txt",
+        "exports/fixture-multi.fcpxml"
+      ]
+    },
+    {
+      "id": "VAL-EXP-007",
+      "status": "pass",
+      "reason": "All export formats retained correct references to multiple source files.",
+      "evidence": [
+        "commands/export_multi_edl_24.txt",
+        "commands/export_multi_fcpxml.txt",
+        "commands/export_multi_davinci.txt",
+        "exports/fixture-multi-24.edl",
+        "exports/fixture-multi.fcpxml",
+        "exports/fixture-multi.py"
+      ]
+    },
+    {
+      "id": "VAL-EXP-008",
+      "status": "pass",
+      "reason": "Missing cut list produced non-zero exit and clear not-found message.",
+      "evidence": [
+        "commands/export_missing_cutlist.txt"
+      ]
+    },
+    {
+      "id": "VAL-EXP-009",
+      "status": "pass",
+      "reason": "Invalid format was rejected with valid format options listed.",
+      "evidence": [
+        "commands/export_invalid_format.txt"
+      ]
+    },
+    {
+      "id": "VAL-EXP-010",
+      "status": "pass",
+      "reason": "EDL and FCPXML clip ordering matched cut list segment order.",
+      "evidence": [
+        "commands/export_multi_edl_24.txt",
+        "commands/export_multi_fcpxml.txt",
+        "exports/fixture-multi-24.edl",
+        "exports/fixture-multi.fcpxml"
+      ]
+    },
+    {
+      "id": "VAL-EXP-011",
+      "status": "pass",
+      "reason": "Empty cut list exported successfully across all formats with no placed clips/events.",
+      "evidence": [
+        "commands/export_empty_edl.txt",
+        "commands/export_empty_fcpxml.txt",
+        "commands/export_empty_davinci.txt",
+        "exports/fixture-empty.edl",
+        "exports/fixture-empty.fcpxml",
+        "exports/fixture-empty.py"
+      ]
+    },
+    {
+      "id": "VAL-EXP-012",
+      "status": "pass",
+      "reason": "Single-segment cut list produced exactly one event/clip in each export format.",
+      "evidence": [
+        "commands/export_single_edl.txt",
+        "commands/export_single_fcpxml.txt",
+        "commands/export_single_davinci.txt",
+        "exports/fixture-single.edl",
+        "exports/fixture-single.fcpxml",
+        "exports/fixture-single.py"
+      ]
+    },
+    {
+      "id": "VAL-EXP-013",
+      "status": "pass",
+      "reason": "FCPXML root declares version=\"1.8\".",
+      "evidence": [
+        "commands/export_multi_fcpxml.txt",
+        "exports/fixture-multi.fcpxml"
+      ]
+    },
+    {
+      "id": "VAL-EXP-014",
+      "status": "pass",
+      "reason": "Export printed a discoverable default output path and file exists there.",
+      "evidence": [
+        "commands/export_single_default_output.txt",
+        "exports/fixture-single-default-path.edl"
+      ]
+    }
+  ],
+  "frictions": [],
+  "blockers": []
+}
