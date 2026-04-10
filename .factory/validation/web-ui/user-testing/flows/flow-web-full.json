@@ -1,0 +1,204 @@
+{
+  "groupId": "flow-web-full",
+  "testedAt": "2026-04-10T23:00:30.559980+00:00",
+  "isolation": {
+    "milestone": "web-ui",
+    "dataDir": "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/sandboxes/web-ui/flow-web-full/data",
+    "fixturesDir": "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/sandboxes/web-ui/flow-web-full/fixtures",
+    "evidenceDir": "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/web-ui/flow-web-full",
+    "appUrl": "http://localhost:3200"
+  },
+  "toolsUsed": [
+    "agent-browser",
+    "curl",
+    "snipsnap CLI",
+    "python3"
+  ],
+  "assertionResults": [
+    {
+      "id": "VAL-WEB-003",
+      "status": "pass",
+      "reason": "Transcription Browser displayed all three CLI-created videos and API /api/transcriptions returned 3 entries (200).",
+      "evidence": [
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/web-ui/flow-web-full/VAL-WEB-003-transcription-list.png",
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/web-ui/flow-web-full/VAL-WEB-003-api-transcriptions.json",
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/web-ui/flow-web-full/VAL-WEB-003-count-check.txt",
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/web-ui/flow-web-full/VAL-WEB-003-server-requests.txt",
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/web-ui/flow-web-full/web-ui-console-errors.txt"
+      ]
+    },
+    {
+      "id": "VAL-WEB-004",
+      "status": "pass",
+      "reason": "Selecting video1 showed segment text plus human-readable start/end timestamps in the detail view.",
+      "evidence": [
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/web-ui/flow-web-full/VAL-WEB-004-transcription-detail.png",
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/web-ui/flow-web-full/VAL-WEB-004-body-text.txt",
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/web-ui/flow-web-full/VAL-WEB-004-api-transcription-detail.json",
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/web-ui/flow-web-full/web-ui-console-errors.txt"
+      ]
+    },
+    {
+      "id": "VAL-WEB-006",
+      "status": "pass",
+      "reason": "Submitting curation from the web form sent POST /api/curate with JSON body containing the prompt and received HTTP 200.",
+      "evidence": [
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/web-ui/flow-web-full/VAL-WEB-006-fetch-log.json",
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/web-ui/flow-web-full/web-api-request-summary.txt",
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/web-ui/flow-web-full/web-ui-console-errors.txt"
+      ]
+    },
+    {
+      "id": "VAL-WEB-007",
+      "status": "pass",
+      "reason": "After curation success, UI showed cut list success details and navigation actions with no stale loading state.",
+      "evidence": [
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/web-ui/flow-web-full/VAL-WEB-007-curation-success.png",
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/web-ui/flow-web-full/VAL-WEB-007-snapshot.txt",
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/web-ui/flow-web-full/VAL-WEB-007-body-text.txt",
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/web-ui/flow-web-full/web-ui-console-errors.txt"
+      ]
+    },
+    {
+      "id": "VAL-WEB-008",
+      "status": "pass",
+      "reason": "Cut List Viewer displayed the curated list with source/start/end/description entries matching API cut list detail.",
+      "evidence": [
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/web-ui/flow-web-full/VAL-WEB-008-cutlist-selected.png",
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/web-ui/flow-web-full/VAL-WEB-008-api-cutlist-detail.json",
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/web-ui/flow-web-full/VAL-WEB-008-ui-api-match.json",
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/web-ui/flow-web-full/web-ui-console-errors.txt"
+      ]
+    },
+    {
+      "id": "VAL-WEB-009",
+      "status": "pass",
+      "reason": "Export tab showed clearly labeled actions for EDL, FCPXML, and DaVinci formats.",
+      "evidence": [
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/web-ui/flow-web-full/VAL-WEB-009-export-buttons.png",
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/web-ui/flow-web-full/web-ui-console-errors.txt"
+      ]
+    },
+    {
+      "id": "VAL-WEB-013",
+      "status": "pass",
+      "reason": "Transcription search input filtered to no-match state for query \"pasta\" and restoring empty query brought the segment list back.",
+      "evidence": [
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/web-ui/flow-web-full/VAL-WEB-013-search-no-match.png",
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/web-ui/flow-web-full/VAL-WEB-013-search-restored.png",
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/web-ui/flow-web-full/VAL-WEB-013-body-no-match.txt",
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/web-ui/flow-web-full/VAL-WEB-013-body-restored.txt",
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/web-ui/flow-web-full/web-ui-console-errors.txt"
+      ]
+    },
+    {
+      "id": "VAL-WEB-014",
+      "status": "pass",
+      "reason": "Cut list timeline rendered segment blocks and used distinct colors per source file for three different videos.",
+      "evidence": [
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/web-ui/flow-web-full/VAL-WEB-014-timeline.png",
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/web-ui/flow-web-full/VAL-WEB-014-ui-state.json",
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/web-ui/flow-web-full/VAL-WEB-008-api-cutlist-detail.json",
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/web-ui/flow-web-full/web-ui-console-errors.txt"
+      ]
+    },
+    {
+      "id": "VAL-WEB-015",
+      "status": "pass",
+      "reason": "During curation processing, UI showed loading indicator and the Curate submit button became disabled while curating=true.",
+      "evidence": [
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/web-ui/flow-web-full/VAL-WEB-015-curation-in-progress-3.png",
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/web-ui/flow-web-full/VAL-WEB-015-curation-state-buttons.json",
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/web-ui/flow-web-full/web-ui-console-errors.txt"
+      ]
+    },
+    {
+      "id": "VAL-WEB-016",
+      "status": "pass",
+      "reason": "Clicking Export as EDL sent POST /api/export/{cutlist_id} and returned downloadable EDL content with valid header structure.",
+      "evidence": [
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/web-ui/flow-web-full/VAL-WEB-016-fetch-log.json",
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/web-ui/flow-web-full/VAL-WEB-016-export-edl-headers.txt",
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/web-ui/flow-web-full/VAL-WEB-016-export-edl-body.edl",
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/web-ui/flow-web-full/VAL-WEB-016-export-edl-validity.txt",
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/web-ui/flow-web-full/web-ui-console-errors.txt"
+      ]
+    },
+    {
+      "id": "VAL-CROSS-003",
+      "status": "pass",
+      "reason": "Web flow covered transcription browsing, curation submit/success, cut list viewing, and export API execution without errors.",
+      "evidence": [
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/web-ui/flow-web-full/VAL-WEB-003-transcription-list.png",
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/web-ui/flow-web-full/VAL-WEB-007-curation-success.png",
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/web-ui/flow-web-full/VAL-WEB-008-cutlist-selected.png",
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/web-ui/flow-web-full/VAL-WEB-016-export-click.png",
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/web-ui/flow-web-full/web-api-request-summary.txt",
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/web-ui/flow-web-full/web-ui-console-errors.txt"
+      ]
+    },
+    {
+      "id": "VAL-CROSS-004",
+      "status": "pass",
+      "reason": "Transcription JSONs with timestamped segments were consumed by curation and resulting cut list referenced only transcribed source files.",
+      "evidence": [
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/web-ui/flow-web-full/VAL-CROSS-004-transcriptions-structure.json",
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/web-ui/flow-web-full/VAL-WEB-006-fetch-log.json",
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/web-ui/flow-web-full/VAL-WEB-008-api-cutlist-detail.json",
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/web-ui/flow-web-full/VAL-CROSS-004-source-match.json"
+      ]
+    },
+    {
+      "id": "VAL-CROSS-006",
+      "status": "pass",
+      "reason": "CLI-created transcriptions were immediately visible in web list (3 videos) with no web retranscription call.",
+      "evidence": [
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/web-ui/flow-web-full/VAL-CROSS-006-cli-transcribe-run1-stdout.txt",
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/web-ui/flow-web-full/VAL-CROSS-010-cli-status-after-run2.txt",
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/web-ui/flow-web-full/VAL-WEB-003-transcription-list.png",
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/web-ui/flow-web-full/VAL-CROSS-006-web-transcribe-calls.txt",
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/web-ui/flow-web-full/web-ui-console-errors.txt"
+      ]
+    },
+    {
+      "id": "VAL-CROSS-007",
+      "status": "pass",
+      "reason": "Cut list generated via web curation was exported successfully via CLI as FCPXML using the same cut list ID in the same isolated data dir.",
+      "evidence": [
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/web-ui/flow-web-full/VAL-WEB-007-curation-success.png",
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/web-ui/flow-web-full/current-cutlist-id.txt",
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/web-ui/flow-web-full/VAL-CROSS-007-cli-export-stdout.txt",
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/web-ui/flow-web-full/VAL-CROSS-007-cli-export.fcpxml",
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/web-ui/flow-web-full/VAL-CROSS-007-cli-export-validation.txt"
+      ]
+    },
+    {
+      "id": "VAL-CROSS-010",
+      "status": "pass",
+      "reason": "After initial transcription of two videos, adding video3 and rerunning transcribe skipped prior files, added only the new file, and later curation used all three.",
+      "evidence": [
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/web-ui/flow-web-full/VAL-CROSS-006-cli-transcribe-run1-stdout.txt",
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/web-ui/flow-web-full/VAL-CROSS-006-cli-status-after-run1.txt",
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/web-ui/flow-web-full/VAL-CROSS-010-cli-transcribe-run2-stdout.txt",
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/web-ui/flow-web-full/VAL-CROSS-010-cli-status-after-run2.txt",
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/web-ui/flow-web-full/VAL-CROSS-010-transcription-checksums.json",
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/web-ui/flow-web-full/VAL-CROSS-010-curation-uses-all3.json"
+      ]
+    }
+  ],
+  "frictions": [
+    {
+      "description": "agent-browser network requests capture returned \"No requests captured\" in this session.",
+      "resolved": true,
+      "resolution": "Captured request evidence via temporary fetch instrumentation in-page plus uvicorn request logs and curl response artifacts.",
+      "affectedAssertions": [
+        "VAL-WEB-003",
+        "VAL-WEB-006",
+        "VAL-WEB-008",
+        "VAL-WEB-016",
+        "VAL-CROSS-003"
+      ]
+    }
+  ],
+  "blockers": []
+}

@@ -1,0 +1,46 @@
+{
+  "milestone": "web-ui",
+  "round": 1,
+  "status": "pass",
+  "assertionsSummary": {
+    "total": 23,
+    "passed": 23,
+    "failed": 0,
+    "blocked": 0
+  },
+  "passedAssertions": [
+    "VAL-CROSS-003",
+    "VAL-CROSS-004",
+    "VAL-CROSS-006",
+    "VAL-CROSS-007",
+    "VAL-CROSS-008",
+    "VAL-CROSS-009",
+    "VAL-CROSS-010",
+    "VAL-WEB-001",
+    "VAL-WEB-002",
+    "VAL-WEB-003",
+    "VAL-WEB-004",
+    "VAL-WEB-005",
+    "VAL-WEB-006",
+    "VAL-WEB-007",
+    "VAL-WEB-008",
+    "VAL-WEB-009",
+    "VAL-WEB-010",
+    "VAL-WEB-011",
+    "VAL-WEB-012",
+    "VAL-WEB-013",
+    "VAL-WEB-014",
+    "VAL-WEB-015",
+    "VAL-WEB-016"
+  ],
+  "failedAssertions": [],
+  "blockedAssertions": [],
+  "appliedUpdates": [
+    {
+      "target": "user-testing.md",
+      "description": "Added guidance for handling empty agent-browser network capture by using curl/uvicorn logs or in-page fetch instrumentation as deterministic API evidence.",
+      "source": "flow-report"
+    }
+  ],
+  "previousRound": null
+}

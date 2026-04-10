@@ -1,0 +1,123 @@
+{
+  "groupId": "flow-web-empty",
+  "testedAt": "2026-04-10T22:50:19.418887+00:00",
+  "isolation": {
+    "milestone": "web-ui",
+    "dataDir": "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/sandboxes/web-ui/flow-web-empty/data",
+    "fixturesDir": "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/sandboxes/web-ui/flow-web-empty/fixtures",
+    "evidenceDir": "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/web-ui/flow-web-empty",
+    "appUrl": "http://localhost:3200"
+  },
+  "toolsUsed": [
+    "agent-browser",
+    "curl",
+    "snipsnap CLI"
+  ],
+  "assertionResults": [
+    {
+      "id": "VAL-WEB-001",
+      "status": "pass",
+      "reason": "Dashboard loaded at / with HTTP 200 and no browser errors.",
+      "evidence": [
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/web-ui/flow-web-empty/VAL-WEB-001-landing.png",
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/web-ui/flow-web-empty/VAL-WEB-001-network-root.txt",
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/web-ui/flow-web-empty/VAL-WEB-001-console.txt"
+      ]
+    },
+    {
+      "id": "VAL-WEB-002",
+      "status": "pass",
+      "reason": "All major tabs (Transcriptions, Curate, Cut Lists, Export) were visible and clickable to distinct views.",
+      "evidence": [
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/web-ui/flow-web-empty/VAL-WEB-002-transcriptions-tab.png",
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/web-ui/flow-web-empty/VAL-WEB-002-curate-tab.png",
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/web-ui/flow-web-empty/VAL-WEB-002-cutlists-tab.png",
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/web-ui/flow-web-empty/VAL-WEB-002-export-tab.png",
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/web-ui/flow-web-empty/web-ui-console-errors.txt"
+      ]
+    },
+    {
+      "id": "VAL-WEB-005",
+      "status": "pass",
+      "reason": "Curation form rendered, accepted typed input, and submit became enabled after text entry.",
+      "evidence": [
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/web-ui/flow-web-empty/VAL-WEB-005-curation-form-empty.png",
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/web-ui/flow-web-empty/VAL-WEB-005-curation-form-filled.png",
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/web-ui/flow-web-empty/VAL-WEB-005-snapshot-before-input.txt",
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/web-ui/flow-web-empty/VAL-WEB-005-submit-enabled.txt",
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/web-ui/flow-web-empty/web-ui-console-errors.txt"
+      ]
+    },
+    {
+      "id": "VAL-WEB-010",
+      "status": "pass",
+      "reason": "With clean data, Transcriptions tab showed explicit empty-state guidance ('No transcriptions found').",
+      "evidence": [
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/web-ui/flow-web-empty/VAL-WEB-010-empty-transcriptions.png",
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/web-ui/flow-web-empty/VAL-WEB-010-body-text.txt",
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/web-ui/flow-web-empty/VAL-WEB-010-network-transcriptions.txt",
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/web-ui/flow-web-empty/api-transcriptions-body.json",
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/web-ui/flow-web-empty/web-ui-console-errors.txt"
+      ]
+    },
+    {
+      "id": "VAL-WEB-011",
+      "status": "pass",
+      "reason": "Cut Lists tab showed clear empty-state message ('No cut list generated yet').",
+      "evidence": [
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/web-ui/flow-web-empty/VAL-WEB-011-empty-cutlist.png",
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/web-ui/flow-web-empty/VAL-WEB-011-network-cutlists.txt",
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/web-ui/flow-web-empty/api-cutlists-body.json",
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/web-ui/flow-web-empty/web-ui-console-errors.txt"
+      ]
+    },
+    {
+      "id": "VAL-WEB-012",
+      "status": "pass",
+      "reason": "When no cut list exists, export download actions were not exposed and no /api/export request was observed.",
+      "evidence": [
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/web-ui/flow-web-empty/VAL-WEB-012-export-no-cutlist.png",
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/web-ui/flow-web-empty/VAL-WEB-012-export-snapshot.txt",
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/web-ui/flow-web-empty/VAL-WEB-012-export-network-check.txt",
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/web-ui/flow-web-empty/VAL-WEB-012-console.txt"
+      ]
+    },
+    {
+      "id": "VAL-CROSS-008",
+      "status": "pass",
+      "reason": "First-time empty dashboard loaded cleanly; transcriptions and cutlists APIs returned empty arrays and UI showed guidance without error screens.",
+      "evidence": [
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/web-ui/flow-web-empty/VAL-CROSS-008-empty-dashboard-transcriptions.png",
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/web-ui/flow-web-empty/VAL-CROSS-008-empty-dashboard-curate.png",
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/web-ui/flow-web-empty/api-transcriptions-body.json",
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/web-ui/flow-web-empty/api-cutlists-body.json",
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/web-ui/flow-web-empty/web-ui-console-errors.txt"
+      ]
+    },
+    {
+      "id": "VAL-CROSS-009",
+      "status": "pass",
+      "reason": "With clean data, CLI curation failed with non-zero exit code and clear guidance to run transcribe first.",
+      "evidence": [
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/web-ui/flow-web-empty/VAL-CROSS-009-cli-exit-code.txt",
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/web-ui/flow-web-empty/VAL-CROSS-009-cli-stderr.txt",
+        "/Users/sdawka/.factory/missions/7ede5099-a0c6-4479-99e9-87a13afef6d2/evidence/web-ui/flow-web-empty/VAL-CROSS-009-cli-stdout.txt"
+      ]
+    }
+  ],
+  "frictions": [
+    {
+      "description": "agent-browser network request capture returned no entries in this session, so request/status evidence was taken from uvicorn server logs and curl outputs.",
+      "resolved": true,
+      "resolution": "Captured and referenced /health and API responses with curl plus web-server.log request lines.",
+      "affectedAssertions": [
+        "VAL-WEB-001",
+        "VAL-WEB-010",
+        "VAL-WEB-011",
+        "VAL-WEB-012",
+        "VAL-CROSS-008"
+      ]
+    }
+  ],
+  "blockers": []
+}

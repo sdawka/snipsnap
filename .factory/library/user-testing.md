@@ -52,6 +52,7 @@ Testing surface, required testing skills/tools, resource cost classification per
 - Verify service availability with `curl -sf http://localhost:3200/health` before launching browser actions.
 - Keep web evidence deterministic: startup/import errors, healthcheck output, and browser connection results.
 - Do not rely solely on noisy browser console output when availability checks already prove surface is unreachable.
+- If `agent-browser` request capture is empty, capture API evidence via `curl`, uvicorn request logs, or in-page fetch instrumentation.
 
 ## Known External Dependency Blocker
 
