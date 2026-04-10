@@ -608,15 +608,18 @@ class TestSegmentInvariants:
     def test_transcription_json_naming_convention(
         self, mock_whisper_model: tuple, dummy_video_file: Path, tmp_data_dir: Path
     ) -> None:
-        """JSON filename must be derived from the source video stem."""
+        """JSON filename must be derived from the source video stem (with a hash suffix
+        to prevent collisions between files with the same name in different directories).
+        """
         from snipsnap.storage import save_transcription
 
         provider = WhisperLocalProvider(model_size="tiny")
         transcription = provider.transcribe(dummy_video_file)
         json_path = save_transcription(transcription, tmp_data_dir)
 
-        # The JSON stem must match the video stem
-        assert json_path.stem == dummy_video_file.stem
+        # Filename is <stem>_<hash8>.json — stem portion must match the video stem
+        assert json_path.name.startswith(f"{dummy_video_file.stem}_")
+        assert json_path.suffix == ".json"
 
 
 # ===========================================================================

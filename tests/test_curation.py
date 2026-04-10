@@ -875,8 +875,8 @@ class TestCutListStorage:
         """Running curate must not modify transcription files."""
         from snipsnap.storage import save_transcription
 
-        save_transcription(transcription_a, tmp_data_dir)
-        trans_path = tmp_data_dir / "transcriptions" / "video_a.json"
+        # save_transcription now returns the actual path (includes hash suffix)
+        trans_path = save_transcription(transcription_a, tmp_data_dir)
         original_mtime = trans_path.stat().st_mtime
         original_content = trans_path.read_bytes()
 

@@ -30,7 +30,9 @@ class TestSaveLoadTranscription:
     ) -> None:
         path = save_transcription(sample_transcription, data_dir=tmp_data_dir)
         assert path.parent == tmp_data_dir / "transcriptions"
-        assert path.name == "test_video.json"
+        # Filename is <stem>_<hash8>.json — starts with the video stem
+        assert path.name.startswith("test_video_")
+        assert path.suffix == ".json"
 
     def test_save_transcription_is_valid_json(
         self, tmp_data_dir: Path, sample_transcription: Transcription

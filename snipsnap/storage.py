@@ -6,13 +6,17 @@ All data is persisted as JSON files under the configured data directory.
 Directory layout:
     <data_dir>/
     ├── transcriptions/
-    │   └── <stem>.json        (one file per transcribed video)
+    │   └── <stem>_<hash8>.json  (one file per transcribed video)
     └── cut_lists/
-        └── <uuid>.json        (one file per cut list)
+        └── <uuid>.json          (one file per cut list)
+
+The transcription filename includes a short hash of the full source path so
+that two videos with the same stem in different subdirectories never collide.
 """
 
 from __future__ import annotations
 
+import hashlib
 import json
 from datetime import datetime
 from pathlib import Path
@@ -39,10 +43,36 @@ def _resolve_data_dir(data_dir: Optional[Path]) -> Path:
     return get_config().data_dir
 
 
+def _transcription_key(source_file: str) -> str:
+    """Return a stable, collision-free storage key for *source_file*.
+
+    Combines the file stem (for human readability) with an 8-character MD5
+    hash of the normalised absolute path (to prevent collisions when two
+    videos share the same filename but live in different directories).
+
+    Examples::
+
+        "/a/b/video.mp4"       → "video_3f7a1c2e"
+        "/x/y/video.mp4"       → "video_9b4d5e1a"   # different hash
+        "/a/b/clip.mkv"        → "clip_d2f3a4b1"
+    """
+    path = Path(source_file)
+    stem = path.stem
+    # Normalise to an absolute path string for consistent hashing.
+    # resolve() with strict=False (the default) does not raise for
+    # non-existent paths — it simply normalises separators / removes `..`.
+    try:
+        normalized = str(path.resolve())
+    except Exception:
+        normalized = str(path)
+    hash8 = hashlib.md5(normalized.encode()).hexdigest()[:8]
+    return f"{stem}_{hash8}"
+
+
 def _transcription_path(source_file: str, data_dir: Path) -> Path:
     """Return the expected JSON path for a transcription of *source_file*."""
-    stem = Path(source_file).stem
-    return data_dir / "transcriptions" / f"{stem}.json"
+    key = _transcription_key(source_file)
+    return data_dir / "transcriptions" / f"{key}.json"
 
 
 def _transcription_from_dict(data: dict) -> Transcription:
