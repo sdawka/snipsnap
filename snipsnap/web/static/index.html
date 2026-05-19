@@ -265,9 +265,16 @@
                 <span class="text-slate-500 w-24 shrink-0">Duration:</span>
                 <span class="text-slate-800" x-text="lastCutList ? formatDuration(lastCutList.total_duration) : ''"></span>
               </div>
-              <div class="flex gap-2">
+              <div class="flex gap-2 items-center">
                 <span class="text-slate-500 w-24 shrink-0">ID:</span>
-                <code class="text-xs text-slate-600 bg-slate-100 px-1 rounded" x-text="lastCutList ? lastCutList.id : ''"></code>
+                <code class="text-xs text-slate-600 bg-slate-100 px-1 rounded" :title="lastCutList ? lastCutList.id : ''" x-text="lastCutList ? truncateId(lastCutList.id) : ''"></code>
+                <button
+                  @click.stop="copyId(lastCutList.id)"
+                  class="text-slate-400 hover:text-indigo-600 text-xs cursor-pointer"
+                  :title="copiedId === lastCutList?.id ? 'Copied!' : 'Copy ID'"
+                >
+                  <span x-text="copiedId === lastCutList?.id ? '✓' : '📋'"></span>
+                </button>
               </div>
             </div>
             <div class="mt-4 flex gap-2">
@@ -332,7 +339,7 @@
         <!-- Left: cut list list -->
         <div class="md:col-span-1 space-y-2">
           <template x-for="cl in cutLists" :key="cl.id">
-            <button
+            <div
               @click="selectCutListById(cl.id)"
               :class="selectedCutList && selectedCutList.id === cl.id
                 ? 'border-indigo-400 bg-indigo-50 ring-1 ring-indigo-400'
@@ -345,7 +352,17 @@
                 <span x-text="cl.segment_count + ' segs'"></span>
                 <span x-text="'⏱ ' + formatDuration(cl.total_duration)"></span>
               </div>
-            </button>
+              <div class="flex items-center gap-1 mt-1.5">
+                <code class="text-xs text-slate-400 bg-slate-100 px-1 rounded" :title="cl.id" x-text="truncateId(cl.id)"></code>
+                <button
+                  @click.stop="copyId(cl.id)"
+                  class="text-slate-400 hover:text-indigo-600 text-xs cursor-pointer"
+                  :title="copiedId === cl.id ? 'Copied!' : 'Copy ID'"
+                >
+                  <span x-text="copiedId === cl.id ? '✓' : '📋'"></span>
+                </button>
+              </div>
+            </div>
           </template>
         </div>
 
@@ -503,6 +520,20 @@
         <!-- Export error -->
         <div x-show="exportError" class="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm" x-text="exportError"></div>
 
+        <!-- Shared export settings -->
+        <div class="bg-white rounded-xl border border-slate-200 p-4 flex items-center gap-4">
+          <span class="text-sm font-medium text-slate-700">Export Settings:</span>
+          <div class="flex items-center gap-2">
+            <label class="text-sm text-slate-500" for="fps-shared">Frame Rate:</label>
+            <select id="fps-shared" x-model="exportFps" class="text-sm border border-slate-300 rounded px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-300">
+              <option value="24">24 fps</option>
+              <option value="25">25 fps</option>
+              <option value="30">30 fps</option>
+              <option value="60">60 fps</option>
+            </select>
+          </div>
+        </div>
+
         <!-- Export format cards -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
 
@@ -511,15 +542,6 @@
             <div class="text-3xl mb-3">🎞️</div>
             <h3 class="font-semibold text-slate-800 mb-1">EDL</h3>
             <p class="text-xs text-slate-500 mb-4 flex-1">CMX 3600 Edit Decision List — compatible with DaVinci Resolve, Premiere Pro, Avid, and most professional NLEs.</p>
-            <div class="flex items-center gap-2 mb-3">
-              <label class="text-xs text-slate-500" for="fps-edl">FPS:</label>
-              <select id="fps-edl" x-model="exportFps" class="text-xs border border-slate-300 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-indigo-300">
-                <option value="24">24</option>
-                <option value="25">25</option>
-                <option value="30">30</option>
-                <option value="60">60</option>
-              </select>
-            </div>
             <button
               @click="doExport('edl')"
               :disabled="exportingFormat === 'edl' || !selectedCutListForExport"
@@ -536,15 +558,6 @@
             <div class="text-3xl mb-3">🍎</div>
             <h3 class="font-semibold text-slate-800 mb-1">FCPXML</h3>
             <p class="text-xs text-slate-500 mb-4 flex-1">Final Cut Pro XML 1.8 — import directly into Final Cut Pro X for professional post-production.</p>
-            <div class="flex items-center gap-2 mb-3">
-              <label class="text-xs text-slate-500" for="fps-fcpxml">FPS:</label>
-              <select id="fps-fcpxml" x-model="exportFps" class="text-xs border border-slate-300 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-indigo-300">
-                <option value="24">24</option>
-                <option value="25">25</option>
-                <option value="30">30</option>
-                <option value="60">60</option>
-              </select>
-            </div>
             <button
               @click="doExport('fcpxml')"
               :disabled="exportingFormat === 'fcpxml' || !selectedCutListForExport"
@@ -561,15 +574,6 @@
             <div class="text-3xl mb-3">🎬</div>
             <h3 class="font-semibold text-slate-800 mb-1">DaVinci Resolve</h3>
             <p class="text-xs text-slate-500 mb-4 flex-1">Python automation script using DaVinci Resolve's scripting API to create a timeline automatically.</p>
-            <div class="flex items-center gap-2 mb-3">
-              <label class="text-xs text-slate-500" for="fps-davinci">FPS:</label>
-              <select id="fps-davinci" x-model="exportFps" class="text-xs border border-slate-300 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-indigo-300">
-                <option value="24">24</option>
-                <option value="25">25</option>
-                <option value="30">30</option>
-                <option value="60">60</option>
-              </select>
-            </div>
             <button
               @click="doExport('davinci')"
               :disabled="exportingFormat === 'davinci' || !selectedCutListForExport"
@@ -626,6 +630,9 @@
         exportingFormat: '',
         exportFps: '24',
         exportError: '',
+
+        // Clipboard feedback
+        copiedId: null,
 
         // ── Computed ──────────────────────────────────────────────────────────
 
@@ -876,6 +883,21 @@
         basename(path) {
           if (!path) return '';
           return path.split('/').pop() || path;
+        },
+
+        async copyId(id) {
+          try {
+            await navigator.clipboard.writeText(id);
+            this.copiedId = id;
+            setTimeout(() => { this.copiedId = null; }, 2000);
+          } catch (e) {
+            console.error('Failed to copy:', e);
+          }
+        },
+
+        truncateId(id) {
+          if (!id || id.length <= 8) return id;
+          return id.slice(0, 8) + '…';
         },
       };
     }

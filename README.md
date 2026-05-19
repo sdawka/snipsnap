@@ -20,27 +20,48 @@ python3 -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"
 ```
 
-Configure your environment:
+Run the setup wizard:
 
 ```bash
-cp .env.example .env
-# Edit .env and set OPENROUTER_API_KEY
+snipsnap init
 ```
 
-Basic usage:
+Run the full pipeline in one command:
 
 ```bash
-# 1. Transcribe videos in a folder
-snipsnap transcribe ./raw-footage
-
-# 2. Curate with a prompt
-snipsnap curate --prompt "find the funniest moments"
-
-# 3. Export the cut list (use the ID printed by curate)
-snipsnap export --format edl <cut-list-id>
+snipsnap run ./raw-footage --prompt "find the funniest moments"
 ```
+
+This transcribes all videos, curates with your prompt, and exports an EDL file.
 
 ## CLI Commands
+
+### `snipsnap run <folder> --prompt "..."`
+
+Run the full pipeline in one command: transcribe → curate → export.
+
+```bash
+snipsnap run ./footage --prompt "find the best moments"
+snipsnap run ./footage --prompt "key arguments" --format fcpxml
+```
+
+| Flag | Description |
+|------|-------------|
+| `--prompt PROMPT` | What to curate (required) |
+| `--format FORMAT` | Export format: `edl`, `fcpxml`, `davinci` (default: edl) |
+| `--output FILE` | Output file path (default: auto-generated) |
+| `--fps FPS` | Frame rate (default: 24) |
+
+### `snipsnap init`
+
+Interactive setup wizard that creates your `.env` configuration file.
+
+| Flag | Description |
+|------|-------------|
+| `--api-key KEY` | Provide API key directly (skips prompt) |
+| `--model MODEL` | LLM model to use |
+| `--data-dir DIR` | Data directory path |
+| `--non-interactive` | Skip prompts, use defaults (requires `--api-key`) |
 
 ### `snipsnap transcribe <folder>`
 
@@ -108,3 +129,20 @@ ruff check snipsnap # linting
 ```
 
 Requires Python ≥ 3.11.
+
+## Troubleshooting
+
+**"OpenRouter API key is not configured"**
+Run `snipsnap init` to set up your configuration, or manually add `OPENROUTER_API_KEY` to your `.env` file.
+
+**"Your OpenRouter API key was rejected"**
+Get a new API key from https://openrouter.ai/keys and run `snipsnap init` again.
+
+**"Rate limit exceeded"**
+Wait a few minutes and try again. Check your usage at https://openrouter.ai/activity.
+
+**"No transcriptions found"**
+Run `snipsnap transcribe ./your-folder` first to process your video files.
+
+**"Cut list not found"**
+Run `snipsnap status` to see available cut list IDs.

@@ -2,6 +2,10 @@
 
 Exposes pipeline operations as Click commands:
 
+    snipsnap run <folder> --prompt "…"  – full pipeline in one command
+    snipsnap init                       – interactive setup wizard
+
+Individual steps (for advanced use):
     snipsnap transcribe <folder>   – transcribe all videos in a folder
     snipsnap curate --prompt "…"   – curate transcriptions with an LLM prompt
     snipsnap export --format …     – export a cut list to EDL / FCPXML / DaVinci
@@ -24,6 +28,14 @@ from snipsnap.curation.engine import (
     CurationError,
     MissingApiKeyError,
 )
+from snipsnap.errors import (
+    cut_list_not_found_error,
+    invalid_api_key_error,
+    missing_api_key_error,
+    network_error,
+    no_transcriptions_error,
+    rate_limit_error,
+)
 from snipsnap.storage import (
     load_all_cut_lists,
     load_all_transcriptions,
@@ -44,6 +56,228 @@ from snipsnap.transcription.whisper_local import WhisperLocalProvider
 @click.version_option(version=__version__, prog_name="snipsnap")
 def main() -> None:
     """SnipSnap – multi-stage video curation pipeline."""
+
+
+# ---------------------------------------------------------------------------
+# init
+# ---------------------------------------------------------------------------
+
+
+@main.command()
+@click.option(
+    "--non-interactive",
+    is_flag=True,
+    help="Skip prompts and use defaults (requires --api-key).",
+)
+@click.option(
+    "--api-key",
+    metavar="KEY",
+    help="OpenRouter API key (avoids interactive prompt).",
+)
+@click.option(
+    "--model",
+    metavar="MODEL",
+    help="LLM model (default: google/gemini-2.5-flash-lite).",
+)
+@click.option(
+    "--data-dir",
+    metavar="DIR",
+    type=click.Path(),
+    help="Data directory (default: ./snipsnap_data/).",
+)
+def init(
+    non_interactive: bool,
+    api_key: Optional[str],
+    model: Optional[str],
+    data_dir: Optional[str],
+) -> None:
+    """Set up SnipSnap configuration interactively.
+
+    Creates a .env file with your API key and preferences.
+    Run this once before using other commands.
+    """
+    from snipsnap.init_wizard import run_wizard
+
+    data_path = Path(data_dir) if data_dir else None
+    run_wizard(
+        api_key=api_key,
+        model=model,
+        data_dir=data_path,
+        non_interactive=non_interactive,
+    )
+
+
+# ---------------------------------------------------------------------------
+# run (full pipeline)
+# ---------------------------------------------------------------------------
+
+
+@main.command()
+@click.argument("folder", type=click.Path(exists=True))
+@click.option(
+    "--prompt",
+    required=True,
+    metavar="PROMPT",
+    help="What to curate (e.g. 'find the funniest moments').",
+)
+@click.option(
+    "--format",
+    "output_format",
+    default="edl",
+    type=click.Choice(["edl", "fcpxml", "davinci"], case_sensitive=False),
+    help="Export format (default: edl).",
+)
+@click.option(
+    "--output",
+    default=None,
+    metavar="FILE",
+    type=click.Path(),
+    help="Output file path (default: auto-generated).",
+)
+@click.option(
+    "--fps",
+    default=24.0,
+    type=float,
+    help="Frame rate for export (default: 24).",
+)
+def run(
+    folder: str,
+    prompt: str,
+    output_format: str,
+    output: Optional[str],
+    fps: float,
+) -> None:
+    """Run the full pipeline: transcribe → curate → export.
+
+    \b
+    Example:
+      snipsnap run ./footage --prompt "find the best moments"
+      snipsnap run ./footage --prompt "key arguments" --format fcpxml
+    """
+    import openai
+
+    folder_path = Path(folder)
+    config = get_config()
+
+    # ------------------------------------------------------------------
+    # Step 1: Transcribe
+    # ------------------------------------------------------------------
+    click.echo(click.style("Step 1/3: Transcribing", bold=True))
+
+    videos: list[Path] = []
+    for ext in SUPPORTED_EXTENSIONS:
+        videos.extend(folder_path.rglob(f"*{ext}"))
+    videos.sort()
+
+    if not videos:
+        click.echo(f"No video files found in: {folder}", err=True)
+        sys.exit(1)
+
+    # Check how many need transcription
+    to_transcribe = [v for v in videos if not transcription_exists(str(v))]
+
+    if to_transcribe:
+        click.echo(f"Loading Whisper model '{config.whisper_model}'…")
+        try:
+            provider = WhisperLocalProvider(model_size=config.whisper_model)
+        except Exception as exc:  # noqa: BLE001
+            click.echo(f"Error: Failed to load Whisper: {exc}", err=True)
+            sys.exit(1)
+
+        for idx, video_path in enumerate(to_transcribe, start=1):
+            click.echo(f"  [{idx}/{len(to_transcribe)}] {video_path.name}")
+            try:
+                transcription = provider.transcribe(video_path)
+                save_transcription(transcription)
+            except Exception as exc:  # noqa: BLE001
+                click.echo(f"    Warning: {exc}", err=True)
+
+    click.echo(f"  {len(videos)} video(s) transcribed")
+
+    # ------------------------------------------------------------------
+    # Step 2: Curate
+    # ------------------------------------------------------------------
+    click.echo()
+    click.echo(click.style("Step 2/3: Curating", bold=True))
+
+    transcriptions = load_all_transcriptions()
+    if not transcriptions:
+        click.echo(no_transcriptions_error().format(), err=True)
+        sys.exit(1)
+
+    api_key = config.openrouter_api_key
+    if not api_key or not api_key.strip():
+        click.echo(missing_api_key_error().format(), err=True)
+        sys.exit(1)
+
+    client = openai.OpenAI(
+        api_key=api_key,
+        base_url="https://openrouter.ai/api/v1",
+    )
+    engine = CurationEngine(client=client, api_key=api_key)
+
+    click.echo(f"  Prompt: {prompt!r}")
+    click.echo(f"  Model: {config.model}")
+
+    try:
+        cut_list = engine.curate(
+            transcriptions=transcriptions,
+            prompt=prompt,
+            model=config.model,
+        )
+    except (MissingApiKeyError, AuthenticationError):
+        click.echo(invalid_api_key_error().format(), err=True)
+        sys.exit(1)
+    except CurationError as exc:
+        click.echo(f"Error: Curation failed: {exc}", err=True)
+        sys.exit(1)
+    except openai.APIStatusError as exc:
+        if exc.status_code == 401:
+            click.echo(invalid_api_key_error().format(), err=True)
+        elif exc.status_code == 429:
+            click.echo(rate_limit_error().format(), err=True)
+        else:
+            click.echo(f"Error: API error (HTTP {exc.status_code})", err=True)
+        sys.exit(1)
+    except openai.APIConnectionError:
+        click.echo(network_error().format(), err=True)
+        sys.exit(1)
+
+    click.echo(f"  Found {len(cut_list.segments)} segment(s), {cut_list.total_duration:.1f}s total")
+
+    # ------------------------------------------------------------------
+    # Step 3: Export
+    # ------------------------------------------------------------------
+    click.echo()
+    click.echo(click.style("Step 3/3: Exporting", bold=True))
+
+    ext_map = {"edl": ".edl", "fcpxml": ".fcpxml", "davinci": ".py"}
+    ext = ext_map[output_format.lower()]
+
+    if output:
+        output_path = Path(output)
+    else:
+        exports_dir = config.data_dir / "exports"
+        exports_dir.mkdir(parents=True, exist_ok=True)
+        output_path = exports_dir / f"{cut_list.id}{ext}"
+
+    fmt = output_format.lower()
+    if fmt == "edl":
+        from snipsnap.export.edl import generate_edl
+        content = generate_edl(cut_list, frame_rate=fps)
+    elif fmt == "fcpxml":
+        from snipsnap.export.fcpxml import generate_fcpxml
+        content = generate_fcpxml(cut_list, frame_rate=int(fps))
+    else:
+        from snipsnap.export.davinci import generate_davinci_script
+        content = generate_davinci_script(cut_list, frame_rate=int(fps))
+
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(content, encoding="utf-8")
+
+    click.echo()
+    click.echo(click.style("Done!", fg="green", bold=True))
+    click.echo(f"  Output: {output_path}")
 
 
 # ---------------------------------------------------------------------------
@@ -213,11 +447,7 @@ def curate(prompt: str, model: Optional[str], data_dir: Optional[str]) -> None:
     transcriptions = load_all_transcriptions(data_path)
 
     if not transcriptions:
-        click.echo(
-            "Error: No transcriptions found. "
-            "Run 'snipsnap transcribe <folder>' first to generate transcriptions.",
-            err=True,
-        )
+        click.echo(no_transcriptions_error().format(), err=True)
         sys.exit(1)
 
     # ------------------------------------------------------------------
@@ -227,11 +457,7 @@ def curate(prompt: str, model: Optional[str], data_dir: Optional[str]) -> None:
     api_key = config.openrouter_api_key
 
     if not api_key or not api_key.strip():
-        click.echo(
-            "Error: OpenRouter API key is not configured. "
-            "Set the OPENROUTER_API_KEY environment variable or add it to your .env file.",
-            err=True,
-        )
+        click.echo(missing_api_key_error().format(), err=True)
         sys.exit(1)
 
     # ------------------------------------------------------------------
@@ -267,21 +493,29 @@ def curate(prompt: str, model: Optional[str], data_dir: Optional[str]) -> None:
             model=llm_model,
             data_dir=data_path,
         )
-    except MissingApiKeyError as exc:
-        click.echo(f"Error: {exc}", err=True)
+    except MissingApiKeyError:
+        click.echo(missing_api_key_error().format(), err=True)
         sys.exit(1)
-    except AuthenticationError as exc:
-        click.echo(f"Error: {exc}", err=True)
+    except AuthenticationError:
+        click.echo(invalid_api_key_error().format(), err=True)
         sys.exit(1)
     except CurationError as exc:
         click.echo(f"Error: Curation failed: {exc}", err=True)
         sys.exit(1)
     except openai.APIStatusError as exc:
-        click.echo(
-            f"Error: The API returned an error (HTTP {exc.status_code}). "
-            "Please check your configuration and try again.",
-            err=True,
-        )
+        if exc.status_code == 401:
+            click.echo(invalid_api_key_error().format(), err=True)
+        elif exc.status_code == 429:
+            click.echo(rate_limit_error().format(), err=True)
+        else:
+            click.echo(
+                f"Error: The API returned an error (HTTP {exc.status_code}). "
+                "Please check your configuration and try again.",
+                err=True,
+            )
+        sys.exit(1)
+    except openai.APIConnectionError:
+        click.echo(network_error().format(), err=True)
         sys.exit(1)
     except openai.OpenAIError:
         click.echo(
@@ -428,11 +662,7 @@ def export(
     cut_list = load_cut_list(cut_list_id, data_path)
 
     if cut_list is None:
-        click.echo(
-            f"Error: Cut list '{cut_list_id}' not found. "
-            "Use 'snipsnap status' to see available cut list IDs.",
-            err=True,
-        )
+        click.echo(cut_list_not_found_error(cut_list_id).format(), err=True)
         sys.exit(1)
 
     # ------------------------------------------------------------------
